@@ -37,6 +37,7 @@ class Player:
         self.anim_count = 0
         self.color = color
         self.image = None
+        self.name_size = 32
         if animation_pack is not None:
             self.image = transform.scale(animation_pack[list(animation_pack.get_sets_names())[0]][0],
                                          (self.width, self.height))
@@ -92,7 +93,7 @@ class Player:
 
         # Rendering Username
         if self.name is not None:
-            font = pygame.font.Font('freesansbold.ttf', self.width // 8)
+            font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', self.name_size)
             text = font.render(self.name, True, self.color)
             screen.blit(text, (self.coords[0] + self.name_delta_x, self.coords[1] + self.name_delta_y))
 
@@ -111,8 +112,7 @@ class Player:
         if "hit" in self.controls and keys[self.controls["hit"]]:
             self.hitting = True
         if self.hitting and self.animation:
-            if self.anim_count == (
-                    self.animation.get_len(f"hit{self.anim_id}-{self.direction}") - 1) * self.hit_animation_speed:
+            if self.anim_count == (self.animation.get_len(f"hit{self.anim_id}-{self.direction}") - 1) * self.hit_animation_speed:
                 self.anim_count, self.hitting = 0, False
                 self.anim_id = random.randint(1, self.animation.get_count("hit"))
             else:
@@ -181,18 +181,8 @@ class Player:
             if "reset-position" in self.controls and keys[self.controls["reset-position"]]:
                 self.setCoords(self.start_coords)
 
-    def collide(self, xvel, yvel, platforms):
-        for p in platforms:
-            if pygame.sprite.collide_rect(self, p):
-                if xvel > 0:
-                    self.rect.right = p.rect.left
-                    print("collide right")
-                if xvel < 0:
-                    self.rect.left = p.rect.right
-                    print("collide left")
-                if yvel > 0:
-                    self.rect.bottom = p.rect.top
-                    self.onGround = True
-                    self.yvel = 0
-                if yvel < 0:
-                    self.rect.top = p.rect.bottom
+    def hit_collides(self, other):
+        offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
+        if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None and self.hitting:
+            return True
+        return False
