@@ -8,6 +8,12 @@ class AnimationPack:
     def __init__(self):
         self.pack = {}
         self.meta = {}
+        self.animation_count = {}
+
+    def set_animation_count(self, dct):
+        """This function sets number of same animations."""
+        for key in dct:
+            self.animation_count[key] = dct[key]
 
     def __str__(self):
         """Getting sets names, length and content."""
@@ -23,13 +29,16 @@ class AnimationPack:
 
     def get_count(self, act):
         """Get a count of animation variations of one activity."""
-        return len(list(filter(lambda x: act in x, list(self.meta.keys())))) // 2
+        if self.animation_count and act in self.animation_count:
+            return self.animation_count[act]
+        else:
+            raise ValueError(f"Can't find any animation sets with tag '{act}'")
 
     def get_frame(self, name, id):
         """Get a frame by set's name and frame id
         Arguments: name - set name, id - frame id."""
         if name not in self.pack:
-            raise ValueError("Can't find right animation set.")
+            raise ValueError(f"Can't find right animation set: {name}")
         if id > len(self.pack):
             raise ValueError("Кадр с данным индексом не найден.")
         return self.pack[name][id]
@@ -38,7 +47,7 @@ class AnimationPack:
         """Get a frames set by it's name
         Arguments: name - set name"""
         if name not in self.pack:
-            raise ValueError("Can't find right animation set.")
+            raise ValueError(f"Can't find right animation set: {name}")
         return self.pack[name]
 
     def get_sets_names(self):
@@ -48,7 +57,7 @@ class AnimationPack:
     def create_flipped_animation_set(self, name):
         """Create flipped set of animations."""
         if name not in self.pack:
-            raise ValueError("Can't find right animation set.")
+            raise ValueError(f"Can't find right animation set: {name}")
 
         # Flipping every frame.
         anim_set = list(map(lambda x: transform.flip(x, True, False), self.pack[name]))
@@ -60,14 +69,14 @@ class AnimationPack:
             self.pack[f"{name}Flip"] = anim_set
             self.meta[f"{name}Flip"] = [f"Flipped {name}"]
 
-    def __getitem__(self, item):
+    def __getitem__(self, name):
         """Getting set by it's name."""
-        if item not in self.pack:
-            raise ValueError("Can't find right animation set.")
-        return self.pack[item]
+        if name not in self.pack:
+            raise ValueError(f"Can't find right animation set: {name}")
+        return self.pack[name]
 
     def get_len(self, name):
         """Get the length of animation."""
         if name not in self.pack:
-            raise ValueError("Can't find right animation set.")
+            raise ValueError(f"Can't find right animation set: {name}")
         return len(self.pack[name])

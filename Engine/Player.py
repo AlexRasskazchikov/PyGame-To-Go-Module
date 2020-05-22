@@ -6,10 +6,11 @@ from pygame import transform
 
 
 class Player:
-    def __init__(self, size=(50, 100), speed=1, color=(255, 0, 0), controls=None,
-                 coords=None, b_collision=True, animation_pack=None):
+    def __init__(self, size=(50, 100), speed=3, color=(255, 255, 255), controls=None,
+                 coords=None, b_collision=True, animation_pack=None, name=None):
 
         """Position & Controls Block."""
+        self.name = name
         self.border_collision = b_collision
         self.width, self.height = size
         self.controls = controls
@@ -19,10 +20,15 @@ class Player:
         if coords is not None:
             self.coords = coords
             self.start_coords = self.coords
+        self.xvel = 0
+        self.yvel = 0
+        self.onGround = False
 
         """Animation variables."""
-        self.anim_id = random.randint(1, 3)
         self.animation = animation_pack
+        self.anim_id = random.randint(1, self.animation.get_count("hit"))
+        self.name_delta_x = 0
+        self.name_delta_y = -20
         self.walk_animation_speed = 17
         self.idle_animation_speed = 40
         self.hit_animation_speed = 15
@@ -34,6 +40,8 @@ class Player:
         if animation_pack is not None:
             self.image = transform.scale(animation_pack[list(animation_pack.get_sets_names())[0]][0],
                                          (self.width, self.height))
+            self.rect = self.image.get_rect(topleft=self.coords)
+            self.mask = pygame.mask.from_surface(self.image)
 
         """NPC Block."""
         self.act = "left"
@@ -79,6 +87,14 @@ class Player:
                       (*self.coords, self.width, self.height))
         else:
             screen.blit(self.image, self.coords)
+            self.rect = self.image.get_rect(topleft=self.coords)
+            self.mask = pygame.mask.from_surface(self.image)
+
+        # Rendering Username
+        if self.name is not None:
+            font = pygame.font.Font('freesansbold.ttf', self.width // 8)
+            text = font.render(self.name, True, self.color)
+            screen.blit(text, (self.coords[0] + self.name_delta_x, self.coords[1] + self.name_delta_y))
 
     def set_sprite_from_pack(self, name, index):
         """Change player's sprite to sprite from Pack"""
@@ -95,16 +111,19 @@ class Player:
         if "hit" in self.controls and keys[self.controls["hit"]]:
             self.hitting = True
         if self.hitting and self.animation:
-            if self.anim_count == (self.animation.get_len(f"hit{self.anim_id}-{self.direction}") - 1) * self.hit_animation_speed:
+            if self.anim_count == (
+                    self.animation.get_len(f"hit{self.anim_id}-{self.direction}") - 1) * self.hit_animation_speed:
                 self.anim_count, self.hitting = 0, False
                 self.anim_id = random.randint(1, self.animation.get_count("hit"))
             else:
                 self.anim_count += 1
-                self.set_sprite_from_pack(f"hit{self.anim_id}-{self.direction}", self.anim_count // self.hit_animation_speed)
+                self.set_sprite_from_pack(f"hit{self.anim_id}-{self.direction}",
+                                          self.anim_count // self.hit_animation_speed)
         else:
             if "right" in self.controls and keys[self.controls["right"]]:
                 self.set_sprite_from_pack("run-right",
-                                          FramesClock // self.walk_animation_speed % self.animation.get_len("run-right"))
+                                          FramesClock // self.walk_animation_speed % self.animation.get_len(
+                                              "run-right"))
                 self.direction = "right"
             elif "left" in self.controls and keys[self.controls["left"]]:
                 self.set_sprite_from_pack("run-left",
@@ -161,3 +180,19 @@ class Player:
 
             if "reset-position" in self.controls and keys[self.controls["reset-position"]]:
                 self.setCoords(self.start_coords)
+
+    def collide(self, xvel, yvel, platforms):
+        for p in platforms:
+            if pygame.sprite.collide_rect(self, p):
+                if xvel > 0:
+                    self.rect.right = p.rect.left
+                    print("collide right")
+                if xvel < 0:
+                    self.rect.left = p.rect.right
+                    print("collide left")
+                if yvel > 0:
+                    self.rect.bottom = p.rect.top
+                    self.onGround = True
+                    self.yvel = 0
+                if yvel < 0:
+                    self.rect.top = p.rect.bottom
