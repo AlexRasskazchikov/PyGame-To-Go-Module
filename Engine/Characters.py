@@ -1,7 +1,7 @@
 import pygame
 
 display = pygame.display.set_mode((1200, 600))
-from Engine import Player
+from Engine.Player import *
 from Engine.Animations import AnimationPack, Level, Layer
 from pygame.image import load
 
@@ -11,13 +11,11 @@ Knight.add_animation_sets("run-right", "idle-right", "hit1-right", "hit2-right")
 Knight.create_flipped_animation_sets()
 Knight.set_animation_count({"hit": 2})
 
-knight = Player(controls={"left": pygame.K_LEFT, "right": pygame.K_RIGHT, "down": pygame.K_DOWN, "up": pygame.K_UP,
-                          "hit": pygame.K_l},
-                animation_pack=Knight, size=(400, 400), speed=10, color=(255, 0, 0), name="Knight")
+knight = Player(speed=10)
 knight.direction = "left"
 knight.name_delta_x = 160
 knight.name_delta_y = 150
-knight.setCoords((500, pygame.display.get_surface().get_size()[1] - knight.height - 20))
+knight.coords = (500, pygame.display.get_surface().get_size()[1] - knight.height - 20)
 knight.hit_animation_speed = 7
 
 """Default Player"""
@@ -28,8 +26,8 @@ Player1.set_animation_count({"hit": 3})
 
 player1 = Player(
     controls={"left": pygame.K_a, "right": pygame.K_d, "reset-position": pygame.K_r, "hit": pygame.K_SPACE},
-    size=(350, 260), animation_pack=Player1, name="Alex", color=(0, 0, 255), speed=17)
-player1.setCoords((10, pygame.display.get_surface().get_size()[1] - player1.height - 20))
+    size=(350, 260), animation=Player1, speed=17)
+player1.set_coords((10, pygame.display.get_surface().get_size()[1] - player1.height - 20))
 
 player1.hit_animation_speed = 7
 player1.name_delta_x = 140

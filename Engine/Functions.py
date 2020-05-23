@@ -3,6 +3,13 @@ import random
 import pygame
 
 
+def show_fps(display, clock):
+    """This function draws current fps on screen"""
+    font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
+    text = font.render(str(int(clock.get_fps())), True, (255, 0, 0))
+    display.blit(text, (25, 25))
+
+
 def draw(display, *players):
     """This function redraws chosen objects"""
     for player in players:
