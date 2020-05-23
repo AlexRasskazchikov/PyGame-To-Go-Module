@@ -17,6 +17,7 @@ class Player(Entity):
         Entity.__init__(self)
         self.width, self.height = size
         self.coords = coords
+        self.start_coords = coords
         self.xvel, self.yvel = 0, 0
         self.onGround = False
         self.controls = controls
@@ -43,6 +44,7 @@ class Player(Entity):
             pass
 
     def update_frame(self, keys, FramesClock):
+        """Animates player"""
         if "hit" in self.controls and keys[self.controls["hit"]]:
             self.hitting = True
         if self.hitting and self.animation:
@@ -72,6 +74,7 @@ class Player(Entity):
                     self.set_sprite_from_pack("idle-left", idle_anim_speed)
 
     def update(self, keys, platforms):
+        """Moves player"""
         if keys[pygame.K_ESCAPE]:
             raise SystemExit("Escape")
         if not self.hitting:
@@ -82,6 +85,8 @@ class Player(Entity):
                 self.xvel = -self.speed
             if "right" in self.controls and keys[self.controls["right"]]:
                 self.xvel = self.speed
+            if "reset" in self.controls and keys[self.controls["reset"]]:
+                self.set_coords(self.start_coords)
             if not self.onGround:
                 self.yvel += 0.5
                 if self.yvel > 100:
@@ -95,6 +100,7 @@ class Player(Entity):
             self.collide(0, self.yvel, platforms)
 
     def collide(self, xvel, yvel, platforms):
+        """Check platform collision"""
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if isinstance(p, ExitBlock):
@@ -102,9 +108,18 @@ class Player(Entity):
                 if xvel > 0:
                     self.rect.right = p.rect.left
                     print("collide right")
+
+                    # Auto-jump
+                    if self.onGround:
+                        self.yvel -= 8
                 if xvel < 0:
                     self.rect.left = p.rect.right
                     print("collide left")
+
+                    # Auto-jump
+                    if self.onGround:
+                        self.yvel -= 8
+
                 if yvel > 0:
                     self.rect.bottom = p.rect.top
                     self.onGround = True
@@ -112,10 +127,14 @@ class Player(Entity):
                 if yvel < 0:
                     self.rect.top = p.rect.bottom
 
-    def set_coords(self, coords):
-        self.coords = coords
+    def set_coords(self, coords, start=False):
+        """Change player Position. If start - + set start coords"""
+        if start:
+            self.start_coords = coords
+        self.rect = self.image.get_rect(topleft=(coords))
 
     def hit_collides(self, other):
+        """Perfect Pixel Collision Checker"""
         offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
         if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None and self.hitting:
             return True

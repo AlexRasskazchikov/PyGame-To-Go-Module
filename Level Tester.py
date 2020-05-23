@@ -1,14 +1,8 @@
-import random
-
 import pygame
 from pygame.rect import Rect
-from pygame.surface import Surface
 
-from Engine.Characters import Knight
-from Engine.Functions import show_fps
-from Engine.Player import Player
+from Engine.Characters import player1, knight
 from Engine.Levels import Plain
-from Engine.Tiles import Entity, ExitBlock
 
 WIN_WIDTH = 1000
 WIN_HEIGHT = 600
@@ -20,43 +14,6 @@ DEPTH = 32
 FLAGS = 0
 CAMERA_SLACK = 100
 cell_height = 32
-
-
-def main():
-    global cameraX, cameraY
-    pygame.init()
-    screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
-    pygame.display.set_caption("Engine Testing")
-    timer = pygame.time.Clock()
-    player = Player((50, 50), (int(50 * 3.2), int(37 * 3.2)), animation=Knight)
-
-    level = Plain
-    background = level.background
-    entities, platforms = level.render_files()
-    total_level_width = level.total_level_width
-    total_level_height = level.total_level_height
-
-    camera = Camera(complex_camera, total_level_width, total_level_height)
-    entities.add(player)
-    FramesClock = 0
-    while True:
-        timer.tick(100)
-        FramesClock += 1
-        keys = pygame.key.get_pressed()
-        events = list(map(lambda x: x.type, pygame.event.get()))
-        if pygame.QUIT in events:
-            raise SystemExit("QUIT")
-
-        screen.fill(background)
-        show_fps(screen, timer)
-        player.update_frame(pygame.key.get_pressed(), FramesClock)
-        camera.update(player)
-
-        player.update(keys, platforms)
-        for e in entities:
-            screen.blit(e.image, camera.apply(e))
-
-        pygame.display.update()
 
 
 class Camera(object):
@@ -89,5 +46,53 @@ def complex_camera(camera, target_rect):
     return Rect(l, t, w, h)
 
 
-if __name__ == "__main__":
-    main()
+def run(level, display, player):
+    timer = pygame.time.Clock()
+
+    background = level.background
+    player2 = knight
+
+    player1.set_coords((50, 50), start=True)
+    player2.set_coords((50, 50), start=True)
+
+    entities, platforms = level.render_files()
+    total_level_width = level.total_level_width
+    total_level_height = level.total_level_height
+
+    camera = Camera(complex_camera, total_level_width, total_level_height)
+    entities.add(player1)
+    player2.name = "Clone"
+    level.background_objects.append(player2)
+    FramesClock = 0
+    while True:
+        timer.tick(100)
+        FramesClock += 1
+        keys = pygame.key.get_pressed()
+        events = list(map(lambda x: x.type, pygame.event.get()))
+        if pygame.QUIT in events:
+            raise SystemExit("Quit")
+        screen.fill(background)
+
+        player.update_frame(pygame.key.get_pressed(), FramesClock)
+        player2.update_frame(pygame.key.get_pressed(), FramesClock)
+        camera.update(player1)
+
+        player.update(keys, platforms)
+        player2.update(keys, platforms)
+
+        for o in level.background_objects:
+            screen.blit(o.image, camera.apply(o))
+            if player.hit_collides(o):
+                print(f"Hitted {o.name}")
+
+        for e in entities:
+            display.blit(e.image, camera.apply(e))
+
+        pygame.display.update()
+
+
+pygame.init()
+screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
+pygame.display.set_caption("Engine Testing")
+
+run(Plain, screen, player1)

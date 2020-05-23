@@ -94,27 +94,3 @@ class AnimationPack:
         if name not in self.pack:
             raise ValueError(f"Can't find right animation set: {name}")
         return len(self.pack[name])
-
-
-class Level:
-    def __init__(self):
-        self.layers = {}
-
-    def layers_set(self, *layers):
-        for layer in layers:
-            self.layers[layer.name] = layer
-
-    def draw_layer(self, screen, layer_name, pos=(0, 0)):
-        screen.blit(self.layers[layer_name](), pos)
-
-
-class Layer:
-    def __init__(self, name, image, size=(1200, 600)):
-        self.name = name
-        self.image = transform.scale(image, size)
-
-    def __str__(self):
-        return self.name
-
-    def __call__(self, *args, **kwargs):
-        return self.image
