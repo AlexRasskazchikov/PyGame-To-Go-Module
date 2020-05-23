@@ -11,7 +11,7 @@ class Entity(pygame.sprite.Sprite):
 
 
 class Player(Entity):
-    def __init__(self, coords=(50, 50), size=(148, 200), speed=5, jump=5,
+    def __init__(self, coords=(50, 50), size=(148, 200), speed=5, jump=15,
                  animation=None, controls={"up": pygame.K_w, "right": pygame.K_d,
                                            "left": pygame.K_a, "hit": pygame.K_SPACE}):
         Entity.__init__(self)
@@ -114,3 +114,9 @@ class Player(Entity):
 
     def set_coords(self, coords):
         self.coords = coords
+
+    def hit_collides(self, other):
+        offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
+        if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None and self.hitting:
+            return True
+        return False

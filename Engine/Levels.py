@@ -58,8 +58,11 @@ Plain.set_map([
     "                                                                                        ",
     "                                                                                        ",
     "                                                                                        ",
+    "                                  GGGGGGGGGGGGGGGGGG                                    ",
     "                                                                                        ",
     "                                                                                        ",
+    "GGGGGGGGGGGGGGGGGG                                                                      ",
+    "                                                                 GGGGGGGGGGGGGGGGGG     ",
     "                                                                                        ",
     "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
     "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP", ])
