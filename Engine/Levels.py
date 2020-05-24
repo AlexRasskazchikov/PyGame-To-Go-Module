@@ -109,7 +109,7 @@ cloth = [r"Assets/sounds/cloth/cloth1.mp3",
          r"Assets/sounds/cloth/cloth4.mp3"]
 
 Plain.add_background_object(BackgroundObject(r"Assets/Objects/C2013.jpg", (100, -50), name="Cloud", sounds=cloth),
-                            BackgroundObject(r"Assets/Objects/C2010.jpg", (700, -50), name="Cloud", sounds=cloth),
+                            BackgroundObject(r"Assets/Objects/C2010.jpg", (1200, -50), name="Cloud", sounds=cloth),
                             BackgroundObject(r"Assets/Objects/C2011.jpg", (1400, -50), name="Cloud", sounds=cloth),
                             BackgroundObject(r"Assets/Objects/obj_0022_Layer-23.png", (500, 150), size=(300, 330), name="Tree"),
                             BackgroundObject(r"Assets/Objects/obj_0022_Layer-23.png", (2200, 150), size=(300, 330), name="Tree"),
@@ -120,4 +120,4 @@ Plain.materials = {"G": pygame.image.load(r"Assets/Tiles/Tile_02.jpg"),
                    "L": pygame.image.load(r"Assets/Tiles/Tile_01.jpg"),
                    "R": pygame.image.load(r"Assets/Tiles/Tile_03.jpg")}
 
-Plain.background = (255, 254, 201)
+Plain.background = (99, 182, 235)

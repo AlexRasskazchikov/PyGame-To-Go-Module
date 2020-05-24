@@ -1,9 +1,9 @@
 import random
+from copy import copy
 
 import pygame
 from pygame.rect import Rect
-from copy import copy
-from Engine import show_fps, White
+
 from Engine.Characters import player1, knight
 from Engine.Levels import Plain
 
@@ -50,7 +50,6 @@ def complex_camera(camera, target_rect):
 
 
 def run(level, display, player):
-
     clock = pygame.time.Clock()
 
     background = level.background
@@ -74,22 +73,19 @@ def run(level, display, player):
         FramesClock += 1
         keys = pygame.key.get_pressed()
         events = list(map(lambda x: x.type, pygame.event.get()))
-        if keys[pygame.K_LSHIFT]:
-            player.speed = 10
-        else:
-            player.speed = 5
         screen.fill(background)
 
         player.update_frame(keys, FramesClock)
-        player2.update_frame(keys, FramesClock)
         player.update_mask()
-
         camera.update(player1)
-
         player.update(keys, platforms)
 
-        draw_list = ["Tree", "Clone", "Cloud"]
+        for i in range(len(background_objects)):
+            o = background_objects[i]
+            if o.name == "Cloud":
+                move_cloud(FramesClock, o, i % 2)
 
+        draw_list = ["Tree", "Cloud"]
         for o in list(filter(lambda x: x.name in draw_list, background_objects)):
             if player.check_hit(o, random.choice(o.sounds)) is not None:
                 display.blit(o.hitted_image, camera.apply(o))
@@ -103,19 +99,26 @@ def run(level, display, player):
         for e in entities:
             display.blit(e.image, camera.apply(e))
 
-        player.draw_mask(display, color=(0, 0, 0))
-        show_fps(display, clock)
         pygame.display.update()
 
         if keys[pygame.K_r]:
-            from Engine.Levels import Plain
             background_objects = list(map(lambda x: copy(x), level.background_objects))
-            print(list(map(lambda x: x.name + " " + str(x.hp), level.background_objects)))
 
         if pygame.QUIT in events:
             raise SystemExit("Quit")
 
 
+def move_cloud(FramesClock, Object, Reversed=False, speed=500):
+    if Reversed:
+        if FramesClock % speed < speed // 2:
+            Object.move(-1, 0)
+        else:
+            Object.move(1, 0)
+    else:
+        if FramesClock % speed < speed // 2:
+            Object.move(1, 0)
+        else:
+            Object.move(-1, 0)
 pygame.init()
 screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
 pygame.display.set_caption("Engine Testing")

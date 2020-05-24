@@ -93,6 +93,10 @@ class Player(Entity):
         if keys[pygame.K_ESCAPE]:
             raise SystemExit("Escape")
         if not self.hitting:
+            if "speedup" in self.controls and keys[self.controls["speedup"]]:
+                self.speed = 10
+            else:
+                self.speed = 7
             if "up" in self.controls and keys[self.controls["up"]]:
                 if self.onGround:
                     self.yvel -= self.jump
