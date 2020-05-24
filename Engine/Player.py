@@ -50,17 +50,17 @@ class Player(Entity):
                                    pygame.K_5]
 
         if self.animation is not None:
-            self.image = pygame.transform.scale(self.animation[list(self.animation.get_sets_names())[0]][0],
-                                                (self.width, self.height))
-            self.rect = self.image.get_rect(topleft=self.coords)
-            self.mask = pygame.mask.from_surface(self.image)
-            self.hitted_image = copy(self.image)
+            self.img = pygame.transform.scale(self.animation[list(self.animation.get_sets_names())[0]][0],
+                                              (self.width, self.height))
+            self.rect = self.img.get_rect(topleft=self.coords)
+            self.mask = pygame.mask.from_surface(self.img)
+            self.hitted_image = copy(self.img)
             self.hitted_image.fill((255, 255, 255), special_flags=pygame.BLEND_ADD)
 
     def set_sprite_from_pack(self, name, index):
         """Change player's sprite to sprite from Pack"""
         if self.animation:
-            self.image = pygame.transform.scale(self.animation.get_frame(name, index), (self.width, self.height))
+            self.img = pygame.transform.scale(self.animation.get_frame(name, index), (self.width, self.height))
         else:
             pass
 
@@ -134,7 +134,7 @@ class Player(Entity):
             self.rect.top += self.yvel
             self.onGround = False
             self.collide(0, self.yvel, platforms)
-            self.mask = pygame.mask.from_surface(self.image)
+            self.mask = pygame.mask.from_surface(self.img)
 
     def collide(self, xvel, yvel, platforms):
         """Check platform collision"""
@@ -146,17 +146,9 @@ class Player(Entity):
                     # Colliding Right
                     self.rect.right = p.rect.left
 
-                    # Auto-jump.
-                    if self.onGround:
-                        self.yvel -= 8
-
                 if xvel < 0:
                     # Colliding Left.
                     self.rect.left = p.rect.right
-
-                    # Auto-jump
-                    if self.onGround:
-                        self.yvel -= 8
 
                 if yvel > 0:
                     # Staying on ground.
@@ -170,7 +162,7 @@ class Player(Entity):
         """Change player Position. If start - + set start coords"""
         if start:
             self.start_coords = coords
-        self.rect = self.image.get_rect(topleft=(coords))
+        self.rect = self.img.get_rect(topleft=(coords))
 
     def collides(self, other):
         """Perfect Pixel Collision Checker"""
@@ -180,9 +172,9 @@ class Player(Entity):
         return False
 
     def update_mask(self):
-        self.hitted_image = copy(self.image)
+        self.hitted_image = copy(self.img)
         self.hitted_image.fill((255, 255, 255), special_flags=pygame.BLEND_ADD)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.mask = pygame.mask.from_surface(self.img)
 
     def draw_mask(self, display, color=(255, 255, 255)):
         pygame.draw.lines(display, color, 1, self.mask.outline())
@@ -201,11 +193,12 @@ class Player(Entity):
         if object.mat not in self.inventory:
             self.inventory[object.mat] = {"img": pygame.transform.scale(object.img, (60, 60)),
                                           "count": 0, "choosen": 1 if not len(self.inventory) else 0,
-                                          "id": len(self.inventory)}
+                                          "id": len(self.inventory),
+                                          "object": copy(object)}
         self.inventory[object.mat]["count"] += object.mat_count
         print(f"+{object.mat_count} {object.mat}")
 
-    def draw_inventory(self, display, border_color=(50, 50, 50), border_thicness=1, size=64, coords=(350, 10)):
+    def draw_inventory(self, display, font, border_color=(50, 50, 50), border_thicness=1, size=64, coords=(600, 10)):
 
         back_slot = pygame.Surface((size, size), pygame.SRCALPHA, 32)
         back_slot.fill((255, 255, 255, 30))
@@ -221,7 +214,11 @@ class Player(Entity):
                 display.blit(back_slot_choosen, (x, y))
                 display.blit(o["img"], (x + 2, y + 2))
                 pygame.draw.rect(display, (255, 255, 255), (x, y, size, size), border_thicness)
+                text = font.render(str(o["count"]), True, (255, 255, 255))
+                display.blit(text, (x, y))
             else:
                 display.blit(back_slot, (x, y))
                 display.blit(o["img"], (x + 2, y + 2))
                 pygame.draw.rect(display, border_color, (x, y, size, size), border_thicness)
+                text = font.render(str(o["count"]), True, (255, 255, 255))
+                display.blit(text, (x, y))

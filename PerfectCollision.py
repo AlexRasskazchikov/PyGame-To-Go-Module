@@ -1,4 +1,5 @@
-import pygame, sys
+import pygame
+import sys
 
 white, black = (255, 255, 255), (0, 0, 0)
 screen_width, screen_height = 640, 480

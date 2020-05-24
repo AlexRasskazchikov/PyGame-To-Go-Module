@@ -2,20 +2,17 @@ import random
 from copy import copy
 
 import pygame
-from pygame.rect import Rect
 
 from Engine import show_fps, show_info, bake_light
 from Engine.Characters import player1
-from Engine.Levels import Plain, LightDemo
+from Engine.Levels import Plain, LightDemo, BackgroundObject
 
-WIN_WIDTH = 1000
-WIN_HEIGHT = 500
+WIN_WIDTH = 1366
+WIN_HEIGHT = 768
 HALF_WIDTH = int(WIN_WIDTH / 2)
 HALF_HEIGHT = int(WIN_HEIGHT / 2)
 
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
-DEPTH = 32
-FLAGS = 0
 CAMERA_SLACK = 100
 cell_height = 32
 
@@ -53,32 +50,34 @@ def complex_camera(camera, target_rect):
 def run(level, display, player):
     clock = pygame.time.Clock()
 
-    background = level.background
-
     player1.set_coords((700, 350), start=True)
-
-    entities, platforms = level.render_files()
     total_level_width = level.total_level_width
     total_level_height = level.total_level_height
     font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
     camera = Camera(complex_camera, total_level_width, total_level_height)
-    entities.add(player1)
     FramesClock = 0
+
+    """Level Objects loading"""
+    entities, platforms, background_tiles = level.render_files()
+    level.background_objects = list(map(lambda x: copy(x), level.background_objects)) + list(
+        map(lambda x: copy(x), background_tiles))
     background_objects = list(map(lambda x: copy(x), level.background_objects))
-    size = pygame.display.get_surface().get_size()
-    image_filter = pygame.Surface(size, pygame.SRCALPHA, 32)
+    entities.add(player1)
+
+    """Lighting"""
+    background = level.background
+    image_filter = pygame.Surface(pygame.display.get_surface().get_size(), pygame.SRCALPHA, 32)
     light = pygame.image.load('Assets/light.png')
-    w, h = player.rect.w, player.rect.h
-    light = pygame.transform.scale(light, (w * 4, h * 4))
+    light = pygame.transform.scale(light, (player.rect.w * 4, player.rect.h * 4))
     clear_image_filter = copy(image_filter)
     clear_image_filter.fill((100, 100, 100))
 
     while True:
-        clock.tick(90)
+        clock.tick(300)
         FramesClock += 1
         keys = pygame.key.get_pressed()
         events = list(map(lambda x: x.type, pygame.event.get()))
-        screen.fill((0, 0, 0))
+        display.fill(background)
 
         player.update_frame(keys, FramesClock)
         player.update_mask()
@@ -88,26 +87,35 @@ def run(level, display, player):
         for i in range(len(background_objects)):
             o = background_objects[i]
             if o.name == "Cloud":
-                move_cloud(FramesClock, o, i % 2)
+                move_cloud(FramesClock, o, bool(i % 2))
 
-        draw_list = ["Tree"]
+        for key in player.inventory:
+            if pygame.MOUSEBUTTONDOWN in events and player.inventory[key]["choosen"]:
+                o = player.inventory[key]["object"]
+                new = BackgroundObject(o.img, (player.rect.x, 0), name=o.name, act=True, mat=o.mat)
+                player.inventory[key]["count"] -= 1
+                if player.inventory[key]["count"] <= 0:
+                    del player.inventory[key]
+                    background_objects.append(new)
+                    break
+                background_objects.append(new)
+
+        draw_list = ["Tree", "Cloud", "Tile"]
 
         for o in list(filter(lambda x: x.name in draw_list, background_objects)):
-            if o.name == "Cloud" and "Wood" in player.inventory and player.inventory["Wood"]['count'] >= 3:
-                o.set_active(True)
             if player.check_hit(o, random.choice(o.sounds)) is not None:
                 display.blit(o.h_img, camera.apply(o))
-                if o.hp - player.damage >= 0:
+                if o.hp - player.damage > 0:
                     o.hp -= player.damage
                 else:
-                    player.inventory_add_object(o)
+                    player.inventory_add_object(copy(o))
                     print(player.inventory)
                     background_objects.remove(o)
             else:
                 display.blit(o.img, camera.apply(o))
 
         for e in entities:
-            display.blit(e.image, camera.apply(e))
+            display.blit(e.img, camera.apply(e))
 
         if level.lighting:
             bake_light(display, clear_image_filter, camera, player, light)
@@ -117,17 +125,19 @@ def run(level, display, player):
             show_fps(display, clock, font)
             show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font)
 
-        player.draw_inventory(display)
+        player.draw_inventory(display, font)
         pygame.display.update()
 
-        if keys[pygame.K_r]:
+        if keys[pygame.K_F5]:
             background_objects = list(map(lambda x: copy(x), level.background_objects))
+            player.inventory = {}
 
-        if pygame.QUIT in events:
-            raise SystemExit("Quit")
+        if keys[pygame.K_ESCAPE]:
+            raise SystemExit("Escape")
 
-        if pygame.MOUSEBUTTONDOWN in events:
+        if keys[pygame.K_F3]:
             break
+
 
 def move_cloud(FramesClock, Object, Reversed=False, speed=500):
     if Reversed:
@@ -142,12 +152,12 @@ def move_cloud(FramesClock, Object, Reversed=False, speed=500):
             Object.move(-1, 0)
 
 
-
-
 pygame.init()
-screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
-pygame.display.set_caption("Engine Testing")
+from pygame.locals import *
+
+flags = FULLSCREEN | DOUBLEBUF
+display = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT), flags)
 
 while True:
-    run(LightDemo, screen, player1)
-    run(Plain, screen, player1)
+    run(Plain, display, player1)
+    run(LightDemo, display, player1)
