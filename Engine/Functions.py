@@ -10,12 +10,6 @@ def show_fps(display, clock):
     display.blit(text, (25, 25))
 
 
-def draw(display, *players):
-    """This function redraws chosen objects"""
-    for player in players:
-        player.draw(display)
-
-
 def npc(player=None, reactionSpeed=250, sleepDiapasone=(100, 150), FramesClock=None, borders=True):
     """NPC Logic."""
     w, h = pygame.display.get_surface().get_size()

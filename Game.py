@@ -24,11 +24,11 @@ def run(*players):
         player2.update_frame(keys, FramesClock)
         player1.move(keys)
         display.fill(Black)
-        if player1.hit_collides(player2):
+        if player1.collides(player2):
             player1.color = Red
         else:
             player1.color = White
-        if player2.hit_collides(player1):
+        if player2.collides(player1):
             player2.color = Red
         else:
             player2.color = White

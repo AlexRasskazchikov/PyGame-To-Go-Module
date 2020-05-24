@@ -1,11 +1,14 @@
+import random
+
 import pygame
 from pygame.rect import Rect
-
+from copy import copy
+from Engine import show_fps, White
 from Engine.Characters import player1, knight
 from Engine.Levels import Plain
 
 WIN_WIDTH = 1000
-WIN_HEIGHT = 600
+WIN_HEIGHT = 500
 HALF_WIDTH = int(WIN_WIDTH / 2)
 HALF_HEIGHT = int(WIN_HEIGHT / 2)
 
@@ -47,12 +50,13 @@ def complex_camera(camera, target_rect):
 
 
 def run(level, display, player):
-    timer = pygame.time.Clock()
+
+    clock = pygame.time.Clock()
 
     background = level.background
     player2 = knight
 
-    player1.set_coords((50, 50), start=True)
+    player1.set_coords((700, 350), start=True)
     player2.set_coords((50, 50), start=True)
 
     entities, platforms = level.render_files()
@@ -64,31 +68,52 @@ def run(level, display, player):
     player2.name = "Clone"
     level.background_objects.append(player2)
     FramesClock = 0
+    background_objects = list(map(lambda x: copy(x), level.background_objects))
     while True:
-        timer.tick(100)
+        clock.tick(60)
         FramesClock += 1
         keys = pygame.key.get_pressed()
         events = list(map(lambda x: x.type, pygame.event.get()))
-        if pygame.QUIT in events:
-            raise SystemExit("Quit")
+        if keys[pygame.K_LSHIFT]:
+            player.speed = 10
+        else:
+            player.speed = 5
         screen.fill(background)
 
-        player.update_frame(pygame.key.get_pressed(), FramesClock)
-        player2.update_frame(pygame.key.get_pressed(), FramesClock)
+        player.update_frame(keys, FramesClock)
+        player2.update_frame(keys, FramesClock)
+        player.update_mask()
+
         camera.update(player1)
 
         player.update(keys, platforms)
-        player2.update(keys, platforms)
 
-        for o in level.background_objects:
-            screen.blit(o.image, camera.apply(o))
-            if player.hit_collides(o):
-                print(f"Hitted {o.name}")
+        draw_list = ["Tree", "Clone", "Cloud"]
+
+        for o in list(filter(lambda x: x.name in draw_list, background_objects)):
+            if player.check_hit(o, random.choice(o.sounds)) is not None:
+                display.blit(o.hitted_image, camera.apply(o))
+                if o.hp - player.damage >= 0:
+                    o.hp -= player.damage
+                else:
+                    background_objects.remove(o)
+            else:
+                display.blit(o.image, camera.apply(o))
 
         for e in entities:
             display.blit(e.image, camera.apply(e))
 
+        player.draw_mask(display, color=(0, 0, 0))
+        show_fps(display, clock)
         pygame.display.update()
+
+        if keys[pygame.K_r]:
+            from Engine.Levels import Plain
+            background_objects = list(map(lambda x: copy(x), level.background_objects))
+            print(list(map(lambda x: x.name + " " + str(x.hp), level.background_objects)))
+
+        if pygame.QUIT in events:
+            raise SystemExit("Quit")
 
 
 pygame.init()

@@ -1,4 +1,5 @@
 import random
+from copy import copy
 
 import pygame
 
@@ -12,9 +13,15 @@ class Entity(pygame.sprite.Sprite):
 
 class Player(Entity):
     def __init__(self, coords=(50, 50), size=(148, 200), speed=5, jump=15,
-                 animation=None, controls={"up": pygame.K_w, "right": pygame.K_d,
-                                           "left": pygame.K_a, "hit": pygame.K_SPACE}):
+                 animation=None, damage=10, hp=100,
+                 controls={"up": pygame.K_w, "right": pygame.K_d, "left": pygame.K_a, "hit": pygame.K_SPACE},
+                 sounds=["Assets/sounds/hit/hit1.mp3",
+                         "Assets/sounds/hit/hit2.mp3",
+                         "Assets/sounds/hit/hit3.mp3",
+                         "Assets/sounds/hit/hit4.mp3"]
+                 ):
         Entity.__init__(self)
+        self.sounds = sounds
         self.width, self.height = size
         self.coords = coords
         self.start_coords = coords
@@ -30,11 +37,19 @@ class Player(Entity):
         self.direction = "right"
         self.speed = speed
         self.jump = jump
+        self.hitted = False
+
+        self.damage = damage
+        self.hp = hp
+        self.start_hp = hp
+
         if self.animation is not None:
             self.image = pygame.transform.scale(self.animation[list(self.animation.get_sets_names())[0]][0],
                                                 (self.width, self.height))
             self.rect = self.image.get_rect(topleft=self.coords)
             self.mask = pygame.mask.from_surface(self.image)
+            self.hitted_image = copy(self.image)
+            self.hitted_image.fill((255, 255, 255), special_flags=pygame.BLEND_ADD)
 
     def set_sprite_from_pack(self, name, index):
         """Change player's sprite to sprite from Pack"""
@@ -98,6 +113,7 @@ class Player(Entity):
             self.rect.top += self.yvel
             self.onGround = False
             self.collide(0, self.yvel, platforms)
+            self.mask = pygame.mask.from_surface(self.image)
 
     def collide(self, xvel, yvel, platforms):
         """Check platform collision"""
@@ -133,9 +149,27 @@ class Player(Entity):
             self.start_coords = coords
         self.rect = self.image.get_rect(topleft=(coords))
 
-    def hit_collides(self, other):
+    def collides(self, other):
         """Perfect Pixel Collision Checker"""
         offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
-        if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None and self.hitting:
+        if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None:
             return True
         return False
+
+    def update_mask(self):
+        self.hitted_image = copy(self.image)
+        self.hitted_image.fill((255, 255, 255), special_flags=pygame.BLEND_ADD)
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def draw_mask(self, display, color=(255, 255, 255)):
+        pygame.draw.lines(display, color, 1, self.mask.outline())
+
+    def check_hit(self, object, sound):
+        if self.collides(object) and self.hitting:
+            if not self.hitted:
+                self.hitted = True
+                pygame.mixer.music.load(sound)
+                pygame.mixer.music.play()
+                return f"Hitted {object.name}!"
+        if not self.hitting:
+            self.hitted = False

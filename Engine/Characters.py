@@ -32,9 +32,10 @@ knight.walk_animation_speed = 15
 player1 = Player(
     controls={"left": pygame.K_a, "right": pygame.K_d, "reset-position": pygame.K_r, "hit": pygame.K_SPACE,
               "up": pygame.K_w, "reset": pygame.K_r},
-    size=(175, 130), animation=Player1, speed=8)
+    size=(175, 130), animation=Player1, speed=5)
 
-player1.hit_animation_speed = 7
-player1.walk_animation_speed = 15
+player1.hit_animation_speed = 5
+player1.idle_animation_speed = 3
+player1.walk_animation_speed = 7
 player1.name_delta_x = 140
 player1.name_delta_y = 5
