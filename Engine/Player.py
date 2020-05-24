@@ -21,6 +21,7 @@ class Player(Entity):
                          "Assets/sounds/hit/hit4.mp3"]
                  ):
         Entity.__init__(self)
+        self.inventory = {}
         self.sounds = sounds
         self.width, self.height = size
         self.coords = coords
@@ -42,6 +43,11 @@ class Player(Entity):
         self.damage = damage
         self.hp = hp
         self.start_hp = hp
+        self.inventory_controls = [pygame.K_1,
+                                   pygame.K_2,
+                                   pygame.K_3,
+                                   pygame.K_4,
+                                   pygame.K_5]
 
         if self.animation is not None:
             self.image = pygame.transform.scale(self.animation[list(self.animation.get_sets_names())[0]][0],
@@ -90,13 +96,24 @@ class Player(Entity):
 
     def update(self, keys, platforms):
         """Moves player"""
-        if keys[pygame.K_ESCAPE]:
-            raise SystemExit("Escape")
         if not self.hitting:
+
+            for i in range(len(self.inventory_controls)):
+                key = self.inventory_controls[i]
+                if keys[key]:
+                    for key2 in self.inventory:
+                        o = self.inventory[key2]
+                        if o["id"] != i and o["choosen"]:
+                            o["choosen"] = 0
+                        if o["id"] == i:
+                            o["choosen"] = 1
+
             if "speedup" in self.controls and keys[self.controls["speedup"]]:
                 self.speed = 10
+                self.hit_animation_speed = 3
             else:
                 self.speed = 7
+                self.hit_animation_speed = 5
             if "up" in self.controls and keys[self.controls["up"]]:
                 if self.onGround:
                     self.yvel -= self.jump
@@ -126,21 +143,23 @@ class Player(Entity):
                 if isinstance(p, ExitBlock):
                     pygame.event.post(pygame.event.Event(pygame.QUIT))
                 if xvel > 0:
+                    # Colliding Right
                     self.rect.right = p.rect.left
-                    print("collide right")
 
-                    # Auto-jump
+                    # Auto-jump.
                     if self.onGround:
                         self.yvel -= 8
+
                 if xvel < 0:
+                    # Colliding Left.
                     self.rect.left = p.rect.right
-                    print("collide left")
 
                     # Auto-jump
                     if self.onGround:
                         self.yvel -= 8
 
                 if yvel > 0:
+                    # Staying on ground.
                     self.rect.bottom = p.rect.top
                     self.onGround = True
                     self.yvel = 0
@@ -169,7 +188,7 @@ class Player(Entity):
         pygame.draw.lines(display, color, 1, self.mask.outline())
 
     def check_hit(self, object, sound):
-        if self.collides(object) and self.hitting:
+        if self.collides(object) and self.hitting and object.is_active():
             if not self.hitted:
                 self.hitted = True
                 pygame.mixer.music.load(sound)
@@ -177,3 +196,32 @@ class Player(Entity):
                 return f"Hitted {object.name}!"
         if not self.hitting:
             self.hitted = False
+
+    def inventory_add_object(self, object):
+        if object.mat not in self.inventory:
+            self.inventory[object.mat] = {"img": pygame.transform.scale(object.img, (60, 60)),
+                                          "count": 0, "choosen": 1 if not len(self.inventory) else 0,
+                                          "id": len(self.inventory)}
+        self.inventory[object.mat]["count"] += object.mat_count
+        print(f"+{object.mat_count} {object.mat}")
+
+    def draw_inventory(self, display, border_color=(50, 50, 50), border_thicness=1, size=64, coords=(350, 10)):
+
+        back_slot = pygame.Surface((size, size), pygame.SRCALPHA, 32)
+        back_slot.fill((255, 255, 255, 30))
+        back_slot_choosen = pygame.Surface((size, size), pygame.SRCALPHA, 32)
+        back_slot_choosen.fill((255, 255, 255, 50))
+
+        w, h = pygame.display.get_surface().get_size()
+        for key in self.inventory:
+            o = self.inventory[key]
+            x, y = coords[0] + size * o["id"], -coords[1] + h - size
+
+            if o["choosen"]:
+                display.blit(back_slot_choosen, (x, y))
+                display.blit(o["img"], (x + 2, y + 2))
+                pygame.draw.rect(display, (255, 255, 255), (x, y, size, size), border_thicness)
+            else:
+                display.blit(back_slot, (x, y))
+                display.blit(o["img"], (x + 2, y + 2))
+                pygame.draw.rect(display, border_color, (x, y, size, size), border_thicness)

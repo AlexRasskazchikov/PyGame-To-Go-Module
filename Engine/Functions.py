@@ -1,13 +1,26 @@
 import random
+from copy import copy
 
 import pygame
 
 
-def show_fps(display, clock):
+def bake_light(display, clear_image_filter, camera, player, light):
+    image_filter = copy(clear_image_filter)
+    coords = camera.apply(player)
+    image_filter.blit(light, (coords[0] - 250, coords[1] - 170))
+    display.blit(image_filter, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+
+
+def show_fps(display, clock, font, coords=(25, 140)):
     """This function draws current fps on screen"""
-    font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
-    text = font.render(str(int(clock.get_fps())), True, (255, 0, 0))
-    display.blit(text, (25, 25))
+    text = font.render("fps: " + str(int(clock.get_fps())), True, (255, 255, 255))
+    display.blit(text, coords)
+
+
+def show_info(display, info, font, coords=(25, 170)):
+    """This function draws current fps on screen"""
+    text = font.render(str(info), True, (255, 255, 255))
+    display.blit(text, coords)
 
 
 def npc(player=None, reactionSpeed=250, sleepDiapasone=(100, 150), FramesClock=None, borders=True):
@@ -55,3 +68,9 @@ def npc(player=None, reactionSpeed=250, sleepDiapasone=(100, 150), FramesClock=N
             player.set_sprite_from_pack("idle-right", FramesClock // 40 % 3)
         else:
             player.set_sprite_from_pack("idle-left", FramesClock // 40 % 3)
+
+
+def calculate_coords(width, height, x_left, y_bottom=0):
+    x1, y1 = x_left, 480 - y_bottom - height
+    x2, y2 = x_left + width, 480 - y_bottom
+    return (x1, y1), (x2, y2)

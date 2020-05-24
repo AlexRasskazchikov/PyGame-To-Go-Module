@@ -4,8 +4,9 @@ from copy import copy
 import pygame
 from pygame.rect import Rect
 
-from Engine.Characters import player1, knight
-from Engine.Levels import Plain
+from Engine import show_fps, show_info, bake_light
+from Engine.Characters import player1
+from Engine.Levels import Plain, LightDemo
 
 WIN_WIDTH = 1000
 WIN_HEIGHT = 500
@@ -53,27 +54,31 @@ def run(level, display, player):
     clock = pygame.time.Clock()
 
     background = level.background
-    player2 = knight
 
     player1.set_coords((700, 350), start=True)
-    player2.set_coords((50, 50), start=True)
 
     entities, platforms = level.render_files()
     total_level_width = level.total_level_width
     total_level_height = level.total_level_height
-
+    font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
     camera = Camera(complex_camera, total_level_width, total_level_height)
     entities.add(player1)
-    player2.name = "Clone"
-    level.background_objects.append(player2)
     FramesClock = 0
     background_objects = list(map(lambda x: copy(x), level.background_objects))
+    size = pygame.display.get_surface().get_size()
+    image_filter = pygame.Surface(size, pygame.SRCALPHA, 32)
+    light = pygame.image.load('Assets/light.png')
+    w, h = player.rect.w, player.rect.h
+    light = pygame.transform.scale(light, (w * 4, h * 4))
+    clear_image_filter = copy(image_filter)
+    clear_image_filter.fill((100, 100, 100))
+
     while True:
-        clock.tick(60)
+        clock.tick(90)
         FramesClock += 1
         keys = pygame.key.get_pressed()
         events = list(map(lambda x: x.type, pygame.event.get()))
-        screen.fill(background)
+        screen.fill((0, 0, 0))
 
         player.update_frame(keys, FramesClock)
         player.update_mask()
@@ -85,20 +90,34 @@ def run(level, display, player):
             if o.name == "Cloud":
                 move_cloud(FramesClock, o, i % 2)
 
-        draw_list = ["Tree", "Cloud"]
+        draw_list = ["Tree"]
+
         for o in list(filter(lambda x: x.name in draw_list, background_objects)):
+            if o.name == "Cloud" and "Wood" in player.inventory and player.inventory["Wood"]['count'] >= 3:
+                o.set_active(True)
             if player.check_hit(o, random.choice(o.sounds)) is not None:
-                display.blit(o.hitted_image, camera.apply(o))
+                display.blit(o.h_img, camera.apply(o))
                 if o.hp - player.damage >= 0:
                     o.hp -= player.damage
                 else:
+                    player.inventory_add_object(o)
+                    print(player.inventory)
                     background_objects.remove(o)
             else:
-                display.blit(o.image, camera.apply(o))
+                display.blit(o.img, camera.apply(o))
 
         for e in entities:
             display.blit(e.image, camera.apply(e))
 
+        if level.lighting:
+            bake_light(display, clear_image_filter, camera, player, light)
+
+        if keys[pygame.K_F1]:
+            player.draw_mask(display)
+            show_fps(display, clock, font)
+            show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font)
+
+        player.draw_inventory(display)
         pygame.display.update()
 
         if keys[pygame.K_r]:
@@ -107,6 +126,8 @@ def run(level, display, player):
         if pygame.QUIT in events:
             raise SystemExit("Quit")
 
+        if pygame.MOUSEBUTTONDOWN in events:
+            break
 
 def move_cloud(FramesClock, Object, Reversed=False, speed=500):
     if Reversed:
@@ -119,8 +140,14 @@ def move_cloud(FramesClock, Object, Reversed=False, speed=500):
             Object.move(1, 0)
         else:
             Object.move(-1, 0)
+
+
+
+
 pygame.init()
 screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
 pygame.display.set_caption("Engine Testing")
 
-run(Plain, screen, player1)
+while True:
+    run(LightDemo, screen, player1)
+    run(Plain, screen, player1)
