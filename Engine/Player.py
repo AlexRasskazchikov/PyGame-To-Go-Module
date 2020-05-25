@@ -3,7 +3,7 @@ from copy import copy
 
 import pygame
 
-from Engine.Tiles import ExitBlock
+from Engine.Levels import BackgroundObject
 
 
 class Entity(pygame.sprite.Sprite):
@@ -21,7 +21,7 @@ class Player(Entity):
                          "Assets/sounds/hit/hit4.mp3"]
                  ):
         Entity.__init__(self)
-        self.inventory = {}
+        self.inventory = []
         self.sounds = sounds
         self.width, self.height = size
         self.coords = coords
@@ -101,12 +101,10 @@ class Player(Entity):
             for i in range(len(self.inventory_controls)):
                 key = self.inventory_controls[i]
                 if keys[key]:
-                    for key2 in self.inventory:
-                        o = self.inventory[key2]
-                        if o["id"] != i and o["choosen"]:
-                            o["choosen"] = 0
-                        if o["id"] == i:
-                            o["choosen"] = 1
+                    for elem in self.inventory:
+                        elem.choosen = False
+                    if i < len(self.inventory):
+                        self.inventory[i].choosen = True
 
             if "speedup" in self.controls and keys[self.controls["speedup"]]:
                 self.speed = 10
@@ -140,8 +138,6 @@ class Player(Entity):
         """Check platform collision"""
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
-                if isinstance(p, ExitBlock):
-                    pygame.event.post(pygame.event.Event(pygame.QUIT))
                 if xvel > 0:
                     # Colliding Right
                     self.rect.right = p.rect.left
@@ -180,6 +176,7 @@ class Player(Entity):
     def draw_mask(self, display, color=(255, 255, 255)):
         pygame.draw.lines(display, color, 1, self.mask.outline())
 
+
     def check_hit(self, object, sound):
         if self.collides(object) and self.hitting and object.is_active():
             if not self.hitted:
@@ -190,14 +187,18 @@ class Player(Entity):
         if not self.hitting:
             self.hitted = False
 
-    def inventory_add_object(self, object):
-        if object.mat not in self.inventory:
-            self.inventory[object.mat] = {"img": pygame.transform.scale(object.img, (60, 60)),
-                                          "count": 0, "choosen": 1 if not len(self.inventory) else 0,
-                                          "id": len(self.inventory),
-                                          "object": copy(object)}
-        self.inventory[object.mat]["count"] += object.mat_count
-        print(f"+{object.mat_count} {object.mat}")
+    def inventory_add_object(self, o):
+        mats = list(map(lambda x: x.mat, self.inventory))
+        new = Block(o.mat, o.img, o.start_hp, type=o.type, name=o.name, )
+
+        if o.mat not in mats:
+            self.inventory.append(new)
+
+        for i in range(len(self.inventory)):
+            if self.inventory[i].mat == o.mat:
+                self.inventory[i].amount += o.amount
+            self.inventory[i].choosen = False
+        self.inventory[-1].choosen = True
 
     def draw_inventory(self, display, font, border_color=(50, 50, 50), border_thicness=1, size=64, coords=(600, 10)):
 
@@ -207,20 +208,51 @@ class Player(Entity):
         back_slot_choosen.fill((255, 255, 255, 50))
 
         w, h = pygame.display.get_surface().get_size()
-        for key in self.inventory:
-            o = self.inventory[key]
-            x, y = coords[0] + size * o["id"], -coords[1] + h - size
+        for i in range(len(self.inventory)):
+            o = self.inventory[i]
+            x, y = coords[0] + size * i, -coords[1] + h - size
             half = size // 2
 
-            if o["choosen"]:
+            if o.choosen:
                 display.blit(back_slot_choosen, (x, y))
-                display.blit(o["img"], (x + 2, y + 2))
+                display.blit(o.icon, (x + 2, y + 2))
                 pygame.draw.rect(display, (255, 255, 255), (x, y, size, size), border_thicness)
-                text = font.render(str(o["count"]), True, (255, 255, 255))
+                text = font.render(str(o.amount), True, (255, 255, 255))
                 display.blit(text, (x + half, y + half))
             else:
                 display.blit(back_slot, (x, y))
-                display.blit(o["img"], (x + 2, y + 2))
+                display.blit(o.icon, (x + 2, y + 2))
                 pygame.draw.rect(display, border_color, (x, y, size, size), border_thicness)
-                text = font.render(str(o["count"]), True, (255, 255, 255))
+                text = font.render(str(o.amount), True, (255, 255, 255))
                 display.blit(text, (x + half, y + half))
+
+    def clear_chosen(self, func):
+        for i in range(len(self.inventory)):
+            self.inventory[i] = False
+
+
+class Block:
+    def __init__(self, mat, img, hp=10, amount=0, name="Block", type="BackgroundObject"):
+        self.img = img
+        self.amount = amount
+        self.hp = hp
+        self.mat = mat
+        self.choosen = False
+        self.name = name
+        self.img = img
+        self.icon = pygame.transform.scale(img, (60, 60))
+        self.type = type
+
+    def get_img(self, size):
+        return pygame.transform.scale(self.img, size)
+
+    def __iadd__(self, other):
+        self.amount += other
+        return self.amount
+
+    def __isub__(self, other):
+        self.amount -= other
+        return self.amount
+
+    def set_choosen(self, bool):
+        self.choosen = bool

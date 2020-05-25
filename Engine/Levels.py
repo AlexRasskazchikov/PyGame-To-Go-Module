@@ -3,7 +3,7 @@ from copy import copy
 
 import pygame
 
-from Engine.Tiles import Platform, Entity
+from Engine.Tiles import Entity
 
 
 class Level:
@@ -29,7 +29,10 @@ class Level:
         for row in self.map:
             for col in row:
                 if col in self.materials:
-                    p = Platform(x, y, self.materials[col], mat=self.materials[col])
+                    p = BackgroundObject(image=self.materials[col],
+                                         coords=(x, y),
+                                         name=col, act=True, mat=col, hp=10, type="Platform")
+
                     if col.isupper():
                         platforms += [p]
                         entities.add(p)
@@ -47,7 +50,7 @@ class BackgroundObject(Entity):
                  sounds=["Assets/sounds/tree/wood1.mp3",
                          "Assets/sounds/tree/wood2.mp3",
                          "Assets/sounds/tree/wood3.mp3",
-                         "Assets/sounds/tree/wood4.mp3"], act=True, mat="Wood", mat_count=1):
+                         "Assets/sounds/tree/wood4.mp3"], act=True, mat="Wood", amount=1, type="BackgroundObject"):
         super().__init__()
         self.name = name
         self.img = image
@@ -57,12 +60,12 @@ class BackgroundObject(Entity):
             self.img = pygame.transform.scale(self.img, size)
         self.rect = self.img.get_rect(topleft=coords)
         self.mask = pygame.mask.from_surface(self.img)
-
+        self.collidable = True
         self.mat = mat
-        self.mat_count = mat_count
+        self.amount = amount
         self.h_img = copy(self.img)
         self.h_img.fill((50, 50, 50), special_flags=pygame.BLEND_ADD)
-
+        self.type = type
         self.hp, self.start_hp = hp, hp
         self.sounds = sounds
 
@@ -133,14 +136,14 @@ def Plain():
         BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
         BackgroundObject(clouds[0], (1200, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-2"),
         BackgroundObject(clouds[1], (1400, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-3"),
-        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 1)),
-        BackgroundObject(trees[0], (1300, 0), name="Tree", size=5, mat_count=random.randint(1, 1), mat="Test"),
-        BackgroundObject(trees[1], (2200, 0), name="Tree", size=5, mat_count=random.randint(1, 1)))
+        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, amount=random.randint(1, 1)),
+        BackgroundObject(trees[0], (1300, 0), name="Tree", size=5, amount=random.randint(1, 1), mat="Test"),
+        BackgroundObject(trees[1], (2200, 0), name="Tree", size=5, amount=random.randint(1, 1)))
 
-    ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
-    right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
-    left = pygame.image.load(r"Assets/Tiles/Tile_01.bmp")
-    earth = pygame.image.load(r"Assets/Tiles/Tile_14.bmp")
+    ground = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_02.bmp"), (32, 32))
+    right = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_03.bmp"), (32, 32))
+    left = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_01.bmp"), (32, 32))
+    earth = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_14.bmp"), (32, 32))
     """earth = pygame.Surface((32, 32))
     earth.fill((91, 49, 56))"""
 
@@ -157,7 +160,7 @@ def Plain():
                        "P": earth,
                        "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
 
-    Plain.background = (5, 0, 59)
+    Plain.background = (105, 169, 204)
     return Plain
 
 
@@ -181,7 +184,7 @@ def LightDemo():
 
     LightDemo.add_background_object(
         BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
-        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 10)))
+        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, amount=random.randint(1, 10)))
 
     ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
     right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
@@ -235,5 +238,5 @@ def Polygon():
                          "P": ground,
                          "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
 
-    Polygon.background = (217, 217, 217)
+    Polygon.background = (105, 169, 204)
     return Polygon
