@@ -11,15 +11,15 @@ def bake_light(display, clear_image_filter, camera, player, light):
     display.blit(image_filter, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
 
 
-def show_fps(display, clock, font, coords=(25, 140)):
+def show_fps(display, clock, font, coords=(25, 140), color=(0, 0, 0)):
     """This function draws current fps on screen"""
-    text = font.render("fps: " + str(int(clock.get_fps())), True, (255, 255, 255))
+    text = font.render("fps: " + str(int(clock.get_fps())), True, color)
     display.blit(text, coords)
 
 
-def show_info(display, info, font, coords=(25, 170)):
+def show_info(display, info, font, coords=(25, 170), color=(255, 255, 255)):
     """This function draws current fps on screen"""
-    text = font.render(str(info), True, (255, 255, 255))
+    text = font.render(str(info), True, color)
     display.blit(text, coords)
 
 
@@ -70,7 +70,7 @@ def npc(player=None, reactionSpeed=250, sleepDiapasone=(100, 150), FramesClock=N
             player.set_sprite_from_pack("idle-left", FramesClock // 40 % 3)
 
 
-def calculate_coords(width, height, x_left, y_bottom=0):
-    x1, y1 = x_left, 480 - y_bottom - height
-    x2, y2 = x_left + width, 480 - y_bottom
-    return (x1, y1), (x2, y2)
+"""def calculate_coords(width, height, x_left, y_bottom=0):
+    x1, y1 = x_left, y_bottom + height
+    x2, y2 = x_left + width, y_bottom
+    return (x1, y1), (x2, y2)"""

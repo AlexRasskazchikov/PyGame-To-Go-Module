@@ -166,9 +166,10 @@ class Player(Entity):
 
     def collides(self, other):
         """Perfect Pixel Collision Checker"""
-        offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
-        if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None:
-            return True
+        if other is not None:
+            offset_x, offset_y = (other.rect.left - self.rect.left), (other.rect.top - self.rect.top)
+            if self.mask.overlap(other.mask, (offset_x, offset_y)) is not None:
+                return True
         return False
 
     def update_mask(self):
@@ -209,16 +210,17 @@ class Player(Entity):
         for key in self.inventory:
             o = self.inventory[key]
             x, y = coords[0] + size * o["id"], -coords[1] + h - size
+            half = size // 2
 
             if o["choosen"]:
                 display.blit(back_slot_choosen, (x, y))
                 display.blit(o["img"], (x + 2, y + 2))
                 pygame.draw.rect(display, (255, 255, 255), (x, y, size, size), border_thicness)
                 text = font.render(str(o["count"]), True, (255, 255, 255))
-                display.blit(text, (x, y))
+                display.blit(text, (x + half, y + half))
             else:
                 display.blit(back_slot, (x, y))
                 display.blit(o["img"], (x + 2, y + 2))
                 pygame.draw.rect(display, border_color, (x, y, size, size), border_thicness)
                 text = font.render(str(o["count"]), True, (255, 255, 255))
-                display.blit(text, (x, y))
+                display.blit(text, (x + half, y + half))

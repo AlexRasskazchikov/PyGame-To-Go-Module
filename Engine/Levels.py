@@ -3,7 +3,6 @@ from copy import copy
 
 import pygame
 
-from Engine import calculate_coords
 from Engine.Tiles import Platform, Entity
 
 
@@ -30,14 +29,10 @@ class Level:
         for row in self.map:
             for col in row:
                 if col in self.materials:
-                    p = Platform(x, y, self.materials[col])
+                    p = Platform(x, y, self.materials[col], mat=self.materials[col])
                     if col.isupper():
                         platforms += [p]
                         entities.add(p)
-                    else:
-                        o = BackgroundObject(self.materials[col], (x, -y + 450), name='Tile',
-                                             act=True, size=2, hp=10, mat="Earth", sounds=earth_sounds)
-                        background_tiles += [o]
                 x += 32
             y += 32
             x = 0
@@ -48,7 +43,7 @@ class Level:
 
 
 class BackgroundObject(Entity):
-    def __init__(self, image, coords, alph=250, size=None, name="Unknown", hp=100,
+    def __init__(self, image, coords, size=None, name="Unknown", hp=100,
                  sounds=["Assets/sounds/tree/wood1.mp3",
                          "Assets/sounds/tree/wood2.mp3",
                          "Assets/sounds/tree/wood3.mp3",
@@ -56,16 +51,12 @@ class BackgroundObject(Entity):
         super().__init__()
         self.name = name
         self.img = image
-        if alph is not None:
-            self.img.fill((255, 255, 255, alph), None, pygame.BLEND_RGBA_MULT)
         if size is not None:
             rect = self.img.get_rect(topleft=coords)
             size = (rect.w * size, rect.h * size)
             self.img = pygame.transform.scale(self.img, size)
         self.rect = self.img.get_rect(topleft=coords)
-        self.coords = calculate_coords(self.rect.w, self.rect.h, *coords)[0]
         self.mask = pygame.mask.from_surface(self.img)
-        self.rect = self.img.get_rect(topleft=self.coords)
 
         self.mat = mat
         self.mat_count = mat_count
@@ -94,44 +85,12 @@ class BackgroundObject(Entity):
     def set_active(self, bool):
         self.act = bool
 
-
-"""Plain level"""
-Plain = Level()
-Plain.set_map([
-    "                                                                                        ",
-    "                                                                                        ",
-    "                                                                                     LGG",
-    "                                                                                     PPP",
-    "                                                                                    LPPP",
-    "                                                                                    PPPP",
-    "                                                                                    PPPP",
-    "                                                                                    PPPP",
-    "                                                                                    PPPP",
-    "                                                                                    PPPP",
-    "GGR                                w                                                PPPP",
-    "PPPGGGGR                          www                                               PPPP",
-    "PPPPPPPPGGGGR                    wwwww                                              PPPP",
-    "PPPPPPPPPPPPPGGR                wwwwwww                                             PPPP",
-    "PPPPPPPPPPPPPPPPGR             wwwwwwwww                                            PPPP",
-    "PPPPPPPPPPPPPPPPPPGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGR            LGGGGGGGGGGGGGGGGGPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR          LPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR        LPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR      LPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPGGGGGGPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-])
-
 cloth = [r"Assets/sounds/cloth/cloth1.mp3",
-         r"Assets/sounds/cloth/cloth2.mp3",
-         r"Assets/sounds/cloth/cloth3.mp3",
-         r"Assets/sounds/cloth/cloth4.mp3"]
-trees = [pygame.image.load(r"Assets/Objects/obj_0022_Layer-23.bmp"),
-         pygame.image.load(r"Assets/Objects/obj_0021_Layer-22.bmp")]
+             r"Assets/sounds/cloth/cloth2.mp3",
+             r"Assets/sounds/cloth/cloth3.mp3",
+             r"Assets/sounds/cloth/cloth4.mp3"]
+trees = [pygame.image.load(r"Assets/Objects/obj_0022_Layer-23.jpg"),
+         pygame.image.load(r"Assets/Objects/obj_0021_Layer-22.jpg")]
 earth_sounds = [r"Assets/Sounds/grass/grass1.mp3",
                 r"Assets/Sounds/grass/grass2.mp3",
                 r"Assets/Sounds/grass/grass3.mp3",
@@ -139,59 +98,142 @@ earth_sounds = [r"Assets/Sounds/grass/grass1.mp3",
 clouds = [pygame.image.load(r"Assets/Objects/Cloud0.bmp"),
           pygame.image.load(r"Assets/Objects/Cloud1.bmp"), ]
 
-Plain.add_background_object(
-    BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
-    BackgroundObject(clouds[0], (1200, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-2"),
-    BackgroundObject(clouds[1], (1400, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-3"),
-    BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 1)),
-    BackgroundObject(trees[0], (1300, 0), name="Tree", size=5, mat_count=random.randint(1, 1), mat="Test"),
-    BackgroundObject(trees[1], (2200, 0), name="Tree", size=5, mat_count=random.randint(1, 1)))
+def Plain():
+    """Plain level"""
+    Plain = Level()
+    Plain.set_map([
+        "                                                                                        ",
+        "                                                                                        ",
+        "                                                                                        ",
+        "                                                                                        ",
+        "                                                                                        ",
+        "                                                                                        ",
+        "                                                                                     LGG",
+        "                                                                                     PPP",
+        "                                                                                    LPPP",
+        "                                                                                    PPPP",
+        "                                                                                    PPPP",
+        "                                                                                    PPPP",
+        "                                                                                    PPPP",
+        "                                                                                    PPPP",
+        "GGR                                w                                                PPPP",
+        "PPPGGGGR                          www                                               PPPP",
+        "PPPPPPPPGGGGR                    wwwww                                              PPPP",
+        "PPPPPPPPPPPPPGGR                wwwwwww                                             PPPP",
+        "PPPPPPPPPPPPPPPPGR             wwwwwwwww                                            PPPP",
+        "PPPPPPPPPPPPPPPPPPGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGR            LGGGGGGGGGGGGGGGGGPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR          LPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR        LPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPR      LPPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPGGGGGGPPPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+    ])
 
-ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
-right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
-left = pygame.image.load(r"Assets/Tiles/Tile_01.bmp")
-earth = pygame.image.load(r"Assets/Tiles/Tile_14.bmp")
-earth = pygame.Surface((32, 32))
-earth.fill((91, 49, 56))
+    Plain.add_background_object(
+        BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
+        BackgroundObject(clouds[0], (1200, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-2"),
+        BackgroundObject(clouds[1], (1400, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-3"),
+        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 1)),
+        BackgroundObject(trees[0], (1300, 0), name="Tree", size=5, mat_count=random.randint(1, 1), mat="Test"),
+        BackgroundObject(trees[1], (2200, 0), name="Tree", size=5, mat_count=random.randint(1, 1)))
 
-house_wall = pygame.Surface((32, 32))
-house_wall.fill((92, 43, 1))
+    ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
+    right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
+    left = pygame.image.load(r"Assets/Tiles/Tile_01.bmp")
+    earth = pygame.image.load(r"Assets/Tiles/Tile_14.bmp")
+    """earth = pygame.Surface((32, 32))
+    earth.fill((91, 49, 56))"""
 
-roof = pygame.Surface((32, 32))
-roof.fill((54, 8, 0))
+    house_wall = pygame.Surface((32, 32))
+    house_wall.fill((92, 43, 1))
 
-Plain.materials = {"G": ground,
-                   "L": left,
-                   "R": right,
-                   "r": roof,
-                   "P": earth,
-                   "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
+    roof = pygame.Surface((32, 32))
+    roof.fill((54, 8, 0))
 
-Plain.background = (5, 0, 59)
-
-LightDemo = Level()
-LightDemo.lighting = True
-LightDemo.set_map([
-    "                                                        ",
-    "                                                        ",
-    "                                                        ",
-    "PPPGGGGR                                                ",
-    "PPPPPPPPGGGGR                                       PPPP",
-    "PPPPPPPPPPPPPGGR                                    PPPP",
-    "PPPPPPPPPPPPPPPPGR                                  PPPP",
-    "PPPPPPPPPPPPPPPPPPGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-    "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-])
-
-LightDemo.add_background_object(
-    BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
-    BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 10)))
-
-LightDemo.materials = {"G": ground,
-                       "P": earth,
+    Plain.materials = {"G": ground,
                        "L": left,
                        "R": right,
-                       "r": roof}
+                       "r": roof,
+                       "P": earth,
+                       "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
+
+    Plain.background = (5, 0, 59)
+    return Plain
+
+
+def LightDemo():
+    LightDemo = Level()
+    LightDemo.lighting = True
+    LightDemo.set_map([
+        "                                                        ",
+        "                                                        ",
+        "                                                        ",
+        "PPPGGGGR                                                ",
+        "PPPPPPPPGGGGR                                       PPPP",
+        "PPPPPPPPPPPPPGGR                                    PPPP",
+        "PPPPPPPPPPPPPPPPGR                                  PPPP",
+        "PPPPPPPPPPPPPPPPPPGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+        "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+    ])
+
+    LightDemo.add_background_object(
+        BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
+        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, mat_count=random.randint(1, 10)))
+
+    ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
+    right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
+    left = pygame.image.load(r"Assets/Tiles/Tile_01.bmp")
+    earth = pygame.image.load(r"Assets/Tiles/Tile_14.bmp")
+    """earth = pygame.Surface((32, 32))
+    earth.fill((91, 49, 56))"""
+
+    LightDemo.materials = {"G": ground,
+                           "P": earth,
+                           "L": left,
+                           "R": right}
+    return LightDemo
+
+
+def Polygon():
+    Polygon = Level()
+    Polygon.set_map([
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                                                                                                                                               ",
+        "                                 wwwww                                                                                                                         ",
+        "PPPPPPPPPPPPPPPP                wwwwwww                                                                                                                        ",
+        "G  G  G  G  PGGPPP             wwwwwwwww                                                                                                                       ",
+        "  G  G  G  GPGGPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+        " G  G  G  G PGGPPG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   GGG G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G",
+        "G  G  G  G  PGGPG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G GGG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G ",
+        "  G  G  G  GPGGP   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G  GG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G  ",
+        " G  G  G  G PGGP  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   GG  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   ",
+        "G  G  G  G  PGGP G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   GGG G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G",
+        "  G  G  G  GPGGPG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G GGG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G ",
+        " G  G  G  G PGGP   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G  GG   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G  ",
+        "G  G  G  G  PGGP  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   GG  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   ",
+    ])
+
+    ground = pygame.Surface((32, 32))
+    ground.fill((125, 125, 125))
+    construct = pygame.Surface((32, 32))
+    construct.fill((156, 156, 159))
+
+    Polygon.materials = {"G": construct,
+                         "P": ground,
+                         "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
+
+    Polygon.background = (217, 217, 217)
+    return Polygon

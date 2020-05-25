@@ -5,7 +5,7 @@ import pygame
 
 from Engine import show_fps, show_info, bake_light
 from Engine.Characters import player1
-from Engine.Levels import Plain, LightDemo, BackgroundObject
+from Engine.Levels import Plain, BackgroundObject, Polygon
 
 WIN_WIDTH = 1366
 WIN_HEIGHT = 768
@@ -13,7 +13,7 @@ HALF_WIDTH = int(WIN_WIDTH / 2)
 HALF_HEIGHT = int(WIN_HEIGHT / 2)
 
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
-CAMERA_SLACK = 100
+CAMERA_SLACK = 500
 cell_height = 32
 
 
@@ -27,6 +27,10 @@ class Camera(object):
 
     def update(self, target):
         self.state = self.camera_func(self.state, target.rect)
+
+    def reverse(self, pos):
+        """Gets the world coordinates by screen coordinates"""
+        return pos[0] - self.state.left, pos[1] - self.state.top
 
 
 def simple_camera(camera, target_rect):
@@ -84,21 +88,19 @@ def run(level, display, player):
         camera.update(player1)
         player.update(keys, platforms)
 
-        for i in range(len(background_objects)):
-            o = background_objects[i]
-            if o.name == "Cloud":
-                move_cloud(FramesClock, o, bool(i % 2))
-
         for key in player.inventory:
-            if pygame.MOUSEBUTTONDOWN in events and player.inventory[key]["choosen"]:
+            if pygame.MOUSEBUTTONDOWN in events and pygame.mouse.get_pressed()[2] and player.inventory[key]["choosen"]:
                 o = player.inventory[key]["object"]
-                new = BackgroundObject(o.img, (player.rect.x, 0), name=o.name, act=True, mat=o.mat)
+                new = BackgroundObject(o.img, (camera.reverse(pygame.mouse.get_pos())), name=o.name, act=True,
+                                       mat=o.mat, hp=o.start_hp)
                 player.inventory[key]["count"] -= 1
                 if player.inventory[key]["count"] <= 0:
                     del player.inventory[key]
-                    background_objects.append(new)
+                    entities.add(new)
+                    platforms.append(new)
                     break
-                background_objects.append(new)
+                entities.add(new)
+                platforms.append(new)
 
         draw_list = ["Tree", "Cloud", "Tile"]
 
@@ -109,10 +111,23 @@ def run(level, display, player):
                     o.hp -= player.damage
                 else:
                     player.inventory_add_object(copy(o))
-                    print(player.inventory)
                     background_objects.remove(o)
             else:
                 display.blit(o.img, camera.apply(o))
+
+        for p in platforms:
+            if pygame.mouse.get_pressed()[0] and p.rect.collidepoint(camera.reverse(pygame.mouse.get_pos())):
+                print("hitted a block")
+                player.hitting = True
+                if not player.hitted:
+                    p.hp -= player.damage
+                    player.hitted = True
+                    if p.hp <= 0:
+                        platforms.remove(p)
+                        entities.remove(p)
+                        player.inventory_add_object(p)
+            if not player.hitting:
+                player.hitted = False
 
         for e in entities:
             display.blit(e.img, camera.apply(e))
@@ -120,10 +135,9 @@ def run(level, display, player):
         if level.lighting:
             bake_light(display, clear_image_filter, camera, player, light)
 
-        if keys[pygame.K_F1]:
-            player.draw_mask(display)
-            show_fps(display, clock, font)
-            show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font)
+        player.draw_mask(display, color=(0, 0, 0))
+        show_fps(display, clock, font, color=(0, 0, 0))
+        show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font, color=(0, 0, 0))
 
         player.draw_inventory(display, font)
         pygame.display.update()
@@ -159,5 +173,5 @@ flags = FULLSCREEN | DOUBLEBUF
 display = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT), flags)
 
 while True:
-    run(Plain, display, player1)
-    run(LightDemo, display, player1)
+    run(Polygon(), display, player1)
+    run(Plain(), display, player1)
