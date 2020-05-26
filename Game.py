@@ -1,3 +1,4 @@
+import pickle
 import random
 from copy import copy
 
@@ -14,7 +15,7 @@ HALF_HEIGHT = int(WIN_HEIGHT / 2)
 
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 CAMERA_SLACK = 500
-cell_height = 32
+cell_height = 50
 
 
 class Camera(object):
@@ -54,38 +55,44 @@ def complex_camera(camera, target_rect):
     return Rect(l, t, w, h)
 
 
-def run(level, display, player):
+def run(level, display, player, load=False):
     clock = pygame.time.Clock()
+    if not load:
+        player1.set_coords((700, 350), start=True)
+        total_level_width = level.total_level_width
+        total_level_height = level.total_level_height
+        camera = Camera(complex_camera, total_level_width, total_level_height)
 
-    player1.set_coords((700, 350), start=True)
-    total_level_width = level.total_level_width
-    total_level_height = level.total_level_height
+        """Level Objects loading"""
+        entities, platforms, background_tiles = level.render_files()
+        level.background_objects = list(map(lambda x: copy(x), level.background_objects)) + list(
+            map(lambda x: copy(x), background_tiles))
+        background_objects = list(map(lambda x: copy(x), level.background_objects))
+        entities.add(player1)
+        """Lighting"""
+        image_filter = pygame.Surface(pygame.display.get_surface().get_size(), pygame.SRCALPHA, 32)
+        light = pygame.image.load('Assets/light.png')
+        light = pygame.transform.scale(light, (player.rect.w * 4, player.rect.h * 4))
+        clear_image_filter = copy(image_filter)
+        clear_image_filter.fill((100, 100, 100))
+    else:
+        with open("savegame", "rb") as f:
+            load_dict = pickle.load(f)
+        entities, platforms, background_tiles = load_dict["Game-Objects"]
+        background_objects = load_dict["Background-Objects"]
+        camera = load_dict["Camera"]
+
+    gradient = vertical_gradient((WIN_WIDTH, WIN_HEIGHT), (107, 116, 202), (211, 211, 211))
     font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
-    camera = Camera(complex_camera, total_level_width, total_level_height)
     FramesClock = 0
-
-    """Level Objects loading"""
-    entities, platforms, background_tiles = level.render_files()
-    level.background_objects = list(map(lambda x: copy(x), level.background_objects)) + list(
-        map(lambda x: copy(x), background_tiles))
-    background_objects = list(map(lambda x: copy(x), level.background_objects))
-    entities.add(player1)
-    gradient = vertical((WIN_WIDTH, WIN_HEIGHT), (107, 116, 202), (211, 211, 211))
-    """Lighting"""
-    background = level.background
-    image_filter = pygame.Surface(pygame.display.get_surface().get_size(), pygame.SRCALPHA, 32)
-    light = pygame.image.load('Assets/light.png')
-    light = pygame.transform.scale(light, (player.rect.w * 4, player.rect.h * 4))
-    clear_image_filter = copy(image_filter)
-    clear_image_filter.fill((100, 100, 100))
 
     while True:
         clock.tick(300)
         FramesClock += 1
         keys = pygame.key.get_pressed()
         events = list(map(lambda x: x.type, pygame.event.get()))
-        display.fill(background)
-        """display.blit(gradient, (0, 0))"""
+        """display.fill(background)"""
+        display.blit(gradient, (0, 0))
 
         player.update_frame(keys, FramesClock)
         player.update_mask()
@@ -100,7 +107,7 @@ def run(level, display, player):
 
                 if not any(colliding):
                     o = player.inventory[i]
-                    new_coords = list(map(lambda x: x - x % 32, camera.reverse(pygame.mouse.get_pos())))
+                    new_coords = list(map(lambda x: x - x % cell_height, camera.reverse(pygame.mouse.get_pos())))
                     new = BackgroundObject(o.img, new_coords, name=o.name, act=True,
                                            mat=o.mat, hp=o.hp, type=o.type)
                     player.inventory[i].amount -= 1
@@ -122,7 +129,7 @@ def run(level, display, player):
                 mouse = camera.reverse(pygame.mouse.get_pos())
                 colliding = list(map(lambda p: p.rect.collidepoint(mouse), platforms))
                 if not any(colliding):
-                    new_coords = list(map(lambda x: x - x % 32, mouse))
+                    new_coords = list(map(lambda x: x - x % cell_height, mouse))
                     rect = player.inventory[i].img.get_rect(topleft=new_coords)
                     pygame.draw.rect(display, (255, 255, 255), camera.apply_rect(rect), 2)
 
@@ -182,6 +189,10 @@ def run(level, display, player):
 
         # Exit Game.
         if keys[pygame.K_ESCAPE]:
+            load_dict = {"Game-Objects": [entities, platforms, background_tiles],
+                         "Background-Objects": background_objects,
+                         "Camera": camera}
+            """Saving code"""
             raise SystemExit("Escape")
 
         # Go to next level.
@@ -202,7 +213,7 @@ def move_cloud(FramesClock, Object, Reversed=False, speed=500):
             Object.move(-1, 0)
 
 
-def vertical(size, startcolor, endcolor):
+def vertical_gradient(size, startcolor, endcolor):
     """
     Draws a vertical linear gradient filling the entire surface. Returns a
     surface filled with the gradient (numeric is only 2-3 times faster).
@@ -227,8 +238,8 @@ def vertical(size, startcolor, endcolor):
 pygame.init()
 from pygame.locals import *
 
-flags = DOUBLEBUF
-display = pygame.display.set_mode((1200, 600), flags)
+flags = DOUBLEBUF | FULLSCREEN
+display = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT), flags)
 
 while True:
     run(Plain(), display, player1)

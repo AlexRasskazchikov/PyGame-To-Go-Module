@@ -2,10 +2,10 @@ import random
 from copy import copy
 
 import pygame
-
 from Engine.Tiles import Entity
 
 
+cell_height = 50
 class Level:
     def __init__(self):
         self.map = []
@@ -18,8 +18,8 @@ class Level:
 
     def set_map(self, map):
         self.map = map
-        self.total_level_width = len(self.map[0]) * 32
-        self.total_level_height = len(self.map) * 32
+        self.total_level_width = len(self.map[0]) * cell_height
+        self.total_level_height = len(self.map) * cell_height
 
     def render_files(self):
         entities = pygame.sprite.Group()
@@ -36,8 +36,8 @@ class Level:
                     if col.isupper():
                         platforms += [p]
                         entities.add(p)
-                x += 32
-            y += 32
+                x += cell_height
+            y += cell_height
             x = 0
         return entities, platforms, background_tiles
 
@@ -55,8 +55,7 @@ class BackgroundObject(Entity):
         self.name = name
         self.img = image
         if size is not None:
-            rect = self.img.get_rect(topleft=coords)
-            size = (rect.w * size, rect.h * size)
+            size = (int(cell_height * size[0]), int(cell_height * size[1]))
             self.img = pygame.transform.scale(self.img, size)
         self.rect = self.img.get_rect(topleft=coords)
         self.mask = pygame.mask.from_surface(self.img)
@@ -92,14 +91,21 @@ cloth = [r"Assets/sounds/cloth/cloth1.mp3",
              r"Assets/sounds/cloth/cloth2.mp3",
              r"Assets/sounds/cloth/cloth3.mp3",
              r"Assets/sounds/cloth/cloth4.mp3"]
-trees = [pygame.image.load(r"Assets/Objects/obj_0022_Layer-23.jpg"),
-         pygame.image.load(r"Assets/Objects/obj_0021_Layer-22.jpg")]
+"""trees = [(pygame.image.load(r"Assets/Objects/obj_0021_Layer-22.jpg")),
+         pygame.image.load(r"Assets/Objects/obj_0022_Layer-23.jpg")]
 earth_sounds = [r"Assets/Sounds/grass/grass1.mp3",
                 r"Assets/Sounds/grass/grass2.mp3",
                 r"Assets/Sounds/grass/grass3.mp3",
                 r"Assets/Sounds/grass/grass4.mp3"]
 clouds = [pygame.image.load(r"Assets/Objects/Cloud0.bmp"),
-          pygame.image.load(r"Assets/Objects/Cloud1.bmp"), ]
+          pygame.image.load(r"Assets/Objects/Cloud1.bmp"), ]"""
+deep_world_objects = {"brass-engine": (pygame.image.load(r"DEEPWORLD 3.0/brass-engine.png")),
+                      "brass-summonner": (pygame.image.load(r"DEEPWORLD 3.0/brass-summonner.png")),
+                      "map": (pygame.image.load(r"DEEPWORLD 3.0/map.png")),
+                      "portal": (pygame.image.load(r"DEEPWORLD 3.0/portal.png")),
+                      "purple-crystal": (pygame.image.load(r"DEEPWORLD 3.0/purple-crystal.png")),
+                      "red-crystal": (pygame.image.load(r"DEEPWORLD 3.0/red-crystal.png")),
+                      "onyx": (pygame.image.load(r"DEEPWORLD 3.0/onyx.png")),}
 
 def Plain():
     """Plain level"""
@@ -133,24 +139,21 @@ def Plain():
     ])
 
     Plain.add_background_object(
-        BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
-        BackgroundObject(clouds[0], (1200, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-2"),
-        BackgroundObject(clouds[1], (1400, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-3"),
-        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, amount=random.randint(1, 1)),
-        BackgroundObject(trees[0], (1300, 0), name="Tree", size=5, amount=random.randint(1, 1), mat="Test"),
-        BackgroundObject(trees[1], (2200, 0), name="Tree", size=5, amount=random.randint(1, 1)))
+        BackgroundObject(deep_world_objects["portal"], (700, 670), name="portal", size=(3, 4), amount=random.randint(1, 1)),
+        BackgroundObject(deep_world_objects["brass-summonner"], (1300, 670), name="brass-summonner", size=(5, 4), amount=random.randint(1, 1), mat="Test"),
+        BackgroundObject(deep_world_objects["brass-engine"], (2200, 670), name="brass-engine", size=(4, 4), amount=random.randint(1, 1)))
 
-    ground = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_02.bmp"), (32, 32))
-    right = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_03.bmp"), (32, 32))
-    left = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_01.bmp"), (32, 32))
-    earth = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_14.bmp"), (32, 32))
-    """earth = pygame.Surface((32, 32))
+    ground = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_02.bmp"), (cell_height, cell_height))
+    right = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_03.bmp"), (cell_height, cell_height))
+    left = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_01.bmp"), (cell_height, cell_height))
+    earth = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_14.bmp"), (cell_height, cell_height))
+    """earth = pygame.Surface((cell_height, cell_height))
     earth.fill((91, 49, 56))"""
 
-    house_wall = pygame.Surface((32, 32))
+    house_wall = pygame.Surface((cell_height, cell_height))
     house_wall.fill((92, 43, 1))
 
-    roof = pygame.Surface((32, 32))
+    roof = pygame.Surface((cell_height, cell_height))
     roof.fill((54, 8, 0))
 
     Plain.materials = {"G": ground,
@@ -190,7 +193,7 @@ def LightDemo():
     right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
     left = pygame.image.load(r"Assets/Tiles/Tile_01.bmp")
     earth = pygame.image.load(r"Assets/Tiles/Tile_14.bmp")
-    """earth = pygame.Surface((32, 32))
+    """earth = pygame.Surface((cell_height, cell_height))
     earth.fill((91, 49, 56))"""
 
     LightDemo.materials = {"G": ground,
@@ -229,9 +232,9 @@ def Polygon():
         "G  G  G  G  PGGP  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   GG  G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   G   ",
     ])
 
-    ground = pygame.Surface((32, 32))
+    ground = pygame.Surface((cell_height, cell_height))
     ground.fill((125, 125, 125))
-    construct = pygame.Surface((32, 32))
+    construct = pygame.Surface((cell_height, cell_height))
     construct.fill((156, 156, 159))
 
     Polygon.materials = {"G": construct,
