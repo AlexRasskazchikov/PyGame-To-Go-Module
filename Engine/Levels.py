@@ -2,10 +2,14 @@ import random
 from copy import copy
 
 import pygame
+
 from Engine.Tiles import Entity
 
-
 cell_height = 50
+
+pygame.init()
+
+
 class Level:
     def __init__(self):
         self.map = []
@@ -47,10 +51,9 @@ class Level:
 
 class BackgroundObject(Entity):
     def __init__(self, image, coords, size=None, name="Unknown", hp=100,
-                 sounds=["Assets/sounds/tree/wood1.mp3",
-                         "Assets/sounds/tree/wood2.mp3",
-                         "Assets/sounds/tree/wood3.mp3",
-                         "Assets/sounds/tree/wood4.mp3"], act=True, mat="Wood", amount=1, type="BackgroundObject"):
+                 sounds=[pygame.mixer.Sound("DEEPWORLD 3.0/m2.wav"),
+                         pygame.mixer.Sound("DEEPWORLD 3.0/m1.wav")], act=True, mat="Wood", amount=1,
+                 type="BackgroundObject"):
         super().__init__()
         self.name = name
         self.img = image
@@ -87,25 +90,31 @@ class BackgroundObject(Entity):
     def set_active(self, bool):
         self.act = bool
 
+
 cloth = [r"Assets/sounds/cloth/cloth1.mp3",
-             r"Assets/sounds/cloth/cloth2.mp3",
-             r"Assets/sounds/cloth/cloth3.mp3",
-             r"Assets/sounds/cloth/cloth4.mp3"]
-"""trees = [(pygame.image.load(r"Assets/Objects/obj_0021_Layer-22.jpg")),
-         pygame.image.load(r"Assets/Objects/obj_0022_Layer-23.jpg")]
+         r"Assets/sounds/cloth/cloth2.mp3",
+         r"Assets/sounds/cloth/cloth3.mp3",
+         r"Assets/sounds/cloth/cloth4.mp3"]
+
 earth_sounds = [r"Assets/Sounds/grass/grass1.mp3",
                 r"Assets/Sounds/grass/grass2.mp3",
                 r"Assets/Sounds/grass/grass3.mp3",
                 r"Assets/Sounds/grass/grass4.mp3"]
-clouds = [pygame.image.load(r"Assets/Objects/Cloud0.bmp"),
-          pygame.image.load(r"Assets/Objects/Cloud1.bmp"), ]"""
 deep_world_objects = {"brass-engine": (pygame.image.load(r"DEEPWORLD 3.0/brass-engine.png")),
                       "brass-summonner": (pygame.image.load(r"DEEPWORLD 3.0/brass-summonner.png")),
                       "map": (pygame.image.load(r"DEEPWORLD 3.0/map.png")),
                       "portal": (pygame.image.load(r"DEEPWORLD 3.0/portal.png")),
                       "purple-crystal": (pygame.image.load(r"DEEPWORLD 3.0/purple-crystal.png")),
                       "red-crystal": (pygame.image.load(r"DEEPWORLD 3.0/red-crystal.png")),
-                      "onyx": (pygame.image.load(r"DEEPWORLD 3.0/onyx.png")),}
+                      "onyx": (pygame.image.load(r"DEEPWORLD 3.0/onyx.png")),
+                      "giant-pumpkin": (pygame.image.load(r"DEEPWORLD 3.0/giant-pumpkin.png")),
+                      "micro-protector": (pygame.image.load(r"DEEPWORLD 3.0/micro-protector.png")),
+                      "ship-wheel": (pygame.image.load(r"DEEPWORLD 3.0/ship-wheel.png")),
+                      "tiger-head": (pygame.image.load(r"DEEPWORLD 3.0/tiger-head.png")),
+                      "terrapus-egg-broken": (pygame.image.load(r"DEEPWORLD 3.0/terrapus-egg-broken.png")),
+                      "diamonds": (pygame.image.load(r"DEEPWORLD 3.0/diamonds.png")),
+                      }
+
 
 def Plain():
     """Plain level"""
@@ -139,16 +148,17 @@ def Plain():
     ])
 
     Plain.add_background_object(
-        BackgroundObject(deep_world_objects["portal"], (700, 670), name="portal", size=(3, 4), amount=random.randint(1, 1)),
-        BackgroundObject(deep_world_objects["brass-summonner"], (1300, 670), name="brass-summonner", size=(5, 4), amount=random.randint(1, 1), mat="Test"),
-        BackgroundObject(deep_world_objects["brass-engine"], (2200, 670), name="brass-engine", size=(4, 4), amount=random.randint(1, 1)))
+        BackgroundObject(deep_world_objects["portal"], (900, 750), name="portal", size=(3, 4),
+                         amount=random.randint(1, 1)),
+        BackgroundObject(deep_world_objects["brass-summonner"], (1300, 750), name="brass-summonner", size=(5, 4),
+                         amount=random.randint(1, 1), mat="Test"),
+        BackgroundObject(deep_world_objects["micro-protector"], (2200, 750), name="micro-protector", size=(1, 1),
+                         amount=random.randint(1, 1)))
 
     ground = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_02.bmp"), (cell_height, cell_height))
     right = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_03.bmp"), (cell_height, cell_height))
     left = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_01.bmp"), (cell_height, cell_height))
     earth = pygame.transform.scale(pygame.image.load(r"Assets/Tiles/Tile_14.bmp"), (cell_height, cell_height))
-    """earth = pygame.Surface((cell_height, cell_height))
-    earth.fill((91, 49, 56))"""
 
     house_wall = pygame.Surface((cell_height, cell_height))
     house_wall.fill((92, 43, 1))
@@ -164,6 +174,7 @@ def Plain():
                        "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
 
     Plain.background = (105, 169, 204)
+    Plain.spawn = (1000, 900)
     return Plain
 
 
@@ -184,10 +195,6 @@ def LightDemo():
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
     ])
-
-    LightDemo.add_background_object(
-        BackgroundObject(clouds[1], (100, 300), name="Cloud", size=5, act=False, mat="Cloudy Stuff-1"),
-        BackgroundObject(trees[1], (500, 0), name="Tree", size=5, amount=random.randint(1, 10)))
 
     ground = pygame.image.load(r"Assets/Tiles/Tile_02.bmp")
     right = pygame.image.load(r"Assets/Tiles/Tile_03.bmp")
@@ -241,5 +248,10 @@ def Polygon():
                          "P": ground,
                          "w": pygame.image.load(r"Assets/Tiles/Tile_02.bmp").convert_alpha()}
 
+    Polygon.add_background_object(
+        BackgroundObject(deep_world_objects["portal"], (600, 450), name="portal", size=(3, 4),
+                         amount=random.randint(1, 1)))
+
     Polygon.background = (105, 169, 204)
+    Polygon.spawn = (464, 750)
     return Polygon

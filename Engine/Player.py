@@ -3,8 +3,6 @@ from copy import copy
 
 import pygame
 
-from Engine.Levels import BackgroundObject
-
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self):
@@ -14,12 +12,12 @@ class Entity(pygame.sprite.Sprite):
 class Player(Entity):
     def __init__(self, coords=(50, 50), size=(148, 200), speed=5, jump=15,
                  animation=None, damage=10, hp=100,
-                 controls={"up": pygame.K_w, "right": pygame.K_d, "left": pygame.K_a, "hit": pygame.K_SPACE},
+                 controls={"up": pygame.K_w, "right": pygame.K_d,
+                           "left": pygame.K_a, "hit": pygame.K_SPACE},
                  sounds=["Assets/sounds/hit/hit1.mp3",
                          "Assets/sounds/hit/hit2.mp3",
                          "Assets/sounds/hit/hit3.mp3",
-                         "Assets/sounds/hit/hit4.mp3"]
-                 ):
+                         "Assets/sounds/hit/hit4.mp3"]):
         Entity.__init__(self)
         self.inventory = []
         self.sounds = sounds
@@ -176,26 +174,24 @@ class Player(Entity):
     def draw_mask(self, display, color=(255, 255, 255)):
         pygame.draw.lines(display, color, 1, self.mask.outline())
 
-
-    def check_hit(self, object, sound):
+    def check_hit(self, object):
         if self.collides(object) and self.hitting and object.is_active():
             if not self.hitted:
                 self.hitted = True
-                pygame.mixer.music.load(sound)
-                pygame.mixer.music.play()
                 return f"Hitted {object.name}!"
         if not self.hitting:
             self.hitted = False
 
     def inventory_add_object(self, o):
-        mats = list(map(lambda x: x.mat, self.inventory))
+        names = list(map(lambda x: x.name, self.inventory))
+
         new = Block(o.mat, o.img, o.start_hp, type=o.type, name=o.name, )
 
-        if o.mat not in mats:
+        if o.name not in names:
             self.inventory.append(new)
 
         for i in range(len(self.inventory)):
-            if self.inventory[i].mat == o.mat:
+            if self.inventory[i].name == o.name:
                 self.inventory[i].amount += o.amount
             self.inventory[i].choosen = False
         self.inventory[-1].choosen = True
@@ -225,10 +221,6 @@ class Player(Entity):
                 pygame.draw.rect(display, border_color, (x, y, size, size), border_thicness)
                 text = font.render(str(o.amount), True, (255, 255, 255))
                 display.blit(text, (x + half, y + half))
-
-    def clear_chosen(self, func):
-        for i in range(len(self.inventory)):
-            self.inventory[i] = False
 
 
 class Block:

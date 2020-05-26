@@ -10,8 +10,8 @@ from Engine.Levels import Plain, BackgroundObject, Polygon
 
 WIN_WIDTH = 1366
 WIN_HEIGHT = 768
-HALF_WIDTH = int(WIN_WIDTH / 2)
-HALF_HEIGHT = int(WIN_HEIGHT / 2)
+HALF_WIDTH = WIN_WIDTH // 2
+HALF_HEIGHT = WIN_HEIGHT // 2
 
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 CAMERA_SLACK = 500
@@ -56,9 +56,10 @@ def complex_camera(camera, target_rect):
 
 
 def run(level, display, player, load=False):
+    portal.play()
     clock = pygame.time.Clock()
     if not load:
-        player1.set_coords((700, 350), start=True)
+        player1.set_coords(level.spawn, start=True)
         total_level_width = level.total_level_width
         total_level_height = level.total_level_height
         camera = Camera(complex_camera, total_level_width, total_level_height)
@@ -86,25 +87,33 @@ def run(level, display, player, load=False):
     font = pygame.font.Font(r'C:\Windows\Fonts\Arial.ttf', 25)
     FramesClock = 0
 
-    while True:
-        clock.tick(300)
-        FramesClock += 1
-        keys = pygame.key.get_pressed()
-        events = list(map(lambda x: x.type, pygame.event.get()))
-        """display.fill(background)"""
-        display.blit(gradient, (0, 0))
+    position_line = pygame.Surface((485, 7), pygame.SRCALPHA, 32)
+    position_line.fill((255, 255, 255, 110))
+    player_position = pygame.Surface((11, 21), pygame.SRCALPHA, 32)
+    player_position.fill((255, 255, 255, 110))
 
+    Run = True
+
+    while Run:
+        clock.tick(100)
+        FramesClock += 1
+
+        keys = pygame.key.get_pressed()
+        events = pygame.event.get()
+        events_type = list(map(lambda x: x.type, events))
+        mouse_pressed = pygame.mouse.get_pressed()
+
+        """display.fill((0, 0, 0))"""
+        display.blit(gradient, (0, 0))
         player.update_frame(keys, FramesClock)
         player.update_mask()
         camera.update(player1)
         player.update(keys, platforms)
+        mouse = camera.reverse(pygame.mouse.get_pos())
 
         for i in range(len(player.inventory)):
-            if pygame.MOUSEBUTTONDOWN in events and pygame.mouse.get_pressed()[2] and player.inventory[i].choosen:
-
-                mouse = camera.reverse(pygame.mouse.get_pos())
+            if pygame.MOUSEBUTTONDOWN in events_type and pygame.mouse.get_pressed()[2] and player.inventory[i].choosen:
                 colliding = list(map(lambda p: p.rect.collidepoint(mouse), platforms))
-
                 if not any(colliding):
                     o = player.inventory[i]
                     new_coords = list(map(lambda x: x - x % cell_height, camera.reverse(pygame.mouse.get_pos())))
@@ -135,10 +144,24 @@ def run(level, display, player, load=False):
 
         # Drawing Background objects
         for o in background_objects:
-            if player.check_hit(o, random.choice(o.sounds)) is not None \
-                    or (pygame.MOUSEBUTTONDOWN in events and pygame.mouse.get_pressed()[0]
-                        and o.rect.collidepoint(camera.reverse(pygame.mouse.get_pos()))):
+            if "portal" in o.name or "protector" in o.name:
+                protectors = {"micro": 10}
+                if "protector" in o.name:
+                    rad = (FramesClock % cell_height * protectors[o.name.split("-")[0]] // 2)
+                else:
+                    rad = (FramesClock % 500)
+                coords = list(map(lambda x: x + 32, camera.apply_rect(o.rect)[:2]))
+                if rad >= 1:
+                    pygame.draw.circle(display, (100, 100, 100), coords, rad, 1)
+
+            if "portal" in o.name:
+                if player.collides(o) and keys[pygame.K_e]:
+                    Run = False
+
+            if player.check_hit(o) is not None \
+                    or (pygame.MOUSEBUTTONDOWN in events_type and mouse_pressed[0]) and o.rect.collidepoint(mouse):
                 display.blit(o.h_img, camera.apply(o))
+                random.choice(o.sounds).play()
                 if o.hp - player.damage > 0:
                     o.hp -= player.damage
                 else:
@@ -150,11 +173,13 @@ def run(level, display, player, load=False):
 
         # Cheking on platforms
         for p in platforms:
-            if pygame.mouse.get_pressed()[0] and p.rect.collidepoint(camera.reverse(pygame.mouse.get_pos())):
+            if mouse_pressed[0] and p.rect.collidepoint(mouse):
                 player.hitting = True
                 if not player.hitted:
                     p.hp -= player.damage
                     player.hitted = True
+                    random.choice(p.sounds).play()
+
                     if p.hp <= 0:
                         print("PLT:", p.mat, p.name, p.type)
                         platforms.remove(p)
@@ -173,12 +198,17 @@ def run(level, display, player, load=False):
 
         # Drawing debug data.
         if keys[pygame.K_F1]:
-            player.draw_mask(display, color=(0, 0, 0))
-            show_fps(display, clock, font, color=(0, 0, 0))
-            show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font, color=(0, 0, 0))
+            player.draw_mask(display, color=(255, 255, 255))
+            show_fps(display, clock, font, color=(255, 255, 255))
+            show_info(display, f"{player.rect.x}; {player.rect.y + player.rect.h}", font, color=(255, 255, 255))
 
         # Drawing Player inventory.
         player.draw_inventory(display, font)
+
+        # Drawing map.
+        display.blit(position_line, (440, 54))
+        display.blit(player_position, (map_coords_calculate(player.rect.x, level.total_level_width), 33))
+        print(map_coords_calculate(player.rect.x, level.total_level_width))
 
         pygame.display.update()
 
@@ -235,11 +265,19 @@ def vertical_gradient(size, startcolor, endcolor):
     return pygame.transform.scale(bigSurf, size)
 
 
+def map_coords_calculate(player_x, level_width=2000, map_width=485, map_delta_x=440):
+    return int((player_x / level_width) * map_width + map_delta_x)
+
+
 pygame.init()
 from pygame.locals import *
 
 flags = DOUBLEBUF | FULLSCREEN
 display = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT), flags)
+portal = pygame.mixer.Sound(r"DEEPWORLD 3.0/portal.wav")
+pygame.mixer.music.load(r"DEEPWORLD 3.0/main.mp3")
+pygame.mixer.music.set_volume(0.05)
+pygame.mixer.music.play(999)
 
 while True:
     run(Plain(), display, player1)
